@@ -17,7 +17,7 @@
 #' @export spell_correction
 spell_correction <- function(txt, lang="en") {
   lang <- match.arg(tolower(lang), c("en", "fr"))
-  dict <- paste0(lang,"_",toupper(lang))
+  dict <- paste0(lang,"_",if(lang=="en") "US" else oupper(lang))
   library(magrittr)
   library(stringr)
   library(hunspell)
