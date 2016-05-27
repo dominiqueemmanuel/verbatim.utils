@@ -19,6 +19,7 @@ spell_correction <- function(txt, lang="en") {
   lang <- match.arg(tolower(lang), c("en", "fr"))
   dict <- paste0(lang,"_",toupper(lang))
   library(magrittr)
+  library(stringr)
   library(hunspell)
   # https://github.com/dominiqueemmanuel/hunspell
 
@@ -43,7 +44,7 @@ spell_correction <- function(txt, lang="en") {
   x[!y][!is.na(e)]<-e[!is.na(e)]
   txt[id]<-x
   txt <- paste(txt,collapse=" ")
-  txt <- str_trim(tokenize_regex(txt,pattern="_SEPARATEUR_DE_VERBATIM_")[[1]])
+  txt <- str_trim(str_split(txt,"_SEPARATEUR_DE_VERBATIM_")[[1]])
   return(txt)
 
 }
