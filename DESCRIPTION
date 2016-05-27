@@ -1,8 +1,8 @@
 Package: verbatim.utils
-Title: Useful functions for verbatims cleaning
+Title: Useful functions for verbatims cleaning, visualization and topic modeling
 Version: 0.0.0.9000
 Authors@R: person("Dominique", "Emmanuel", email = "dominique_emmanuel@hotmail.com", role = c("aut", "cre"))
-Description: Useful functions for verbatims cleaning.
+Description: Useful functions for verbatims cleaning, visualization and topic modeling.
 Depends:
     R (>= 3.2.3)
 Imports: Ruchardet, magrittr, stringr, hunspell, tokenizers, qdapRegex, text2vec

@@ -69,7 +69,7 @@ word_exclusion <- function(txt
   }
 
   if("special_caracter" %in% excluded_form){
-    txt <- gsub("[^\\]\\[\\,\\;\\?\\;\\:\\!\\'\\\"\\-\\_[:^punct:]]",if(!replace_excluded_form)  "" else " [CARACTÈRE_SPÉCIAL] ", txt, perl=TRUE)
+    txt <- gsub("[^\\]\\[\\,\\;\\?\\;\\:\\!\\'\\\"\\-\\_´’[:^punct:]]",if(!replace_excluded_form)  "" else " [CARACTÈRE_SPÉCIAL] ", txt, perl=TRUE)
   }
 
   if("ponctuation" %in% excluded_form){

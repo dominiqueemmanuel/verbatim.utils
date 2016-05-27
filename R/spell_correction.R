@@ -24,7 +24,7 @@ spell_correction <- function(txt, lang="en") {
   # https://github.com/dominiqueemmanuel/hunspell
 
   ## On s'assure que les apostrphe ne sont pas collées aux mots suivants pour éviter les problème de tokenisation
-  txt <- gsub("'","' ",txt)
+  txt <- gsub("'|´|’","' ",txt)
 
   ## Pour les autres signes de ponctuation on rajoute un espace avant et après
   p<-'\\!|\\"|\\$|\\%|\\(|\\)|\\*|\\+|\\,|\\.|\\/|\\:|\\;|\\<|\\=|\\>|\\?|\\[|\\\\|\\]|\\`|\\{|\\||\\}'
