@@ -9,8 +9,9 @@
 ## special_form peut prendre une ou plusieurs valeurs parmis : c("email","link","special_character","number","emoticon","punctuation")
 ## > Penser au fait que la fonction doit être Cross Platform
 ## > Penser aux performance (la fonction doit être rapide sur de longs et nombreux verbatims)
+## > le paramètre excluded_word n'est pas encore utilisé.
 
-## Taux de développement estimé : 80 %
+## Taux de développement estimé : 75 %
 ## Next steps : faire des tests dans tous les sens y compris test de performance.
 
 
