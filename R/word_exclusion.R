@@ -30,50 +30,51 @@ word_exclusion <- function(txt
   library(qdapRegex)
 
   if("email" %in% excluded_form){
-    txt <- rm_email(txt, replacement = if(replace_excluded_form) " [EMAIL] " else "")
+    txt <- rm_email(txt, replacement = if(replace_excluded_form) " _EMAIL_ " else "")
   }
 
   if("link" %in% excluded_form){
-    txt <- rm_url(txt, replacement = if(replace_excluded_form) " [LIEN] " else "")
-    txt <- rm_twitter_url(txt, replacement = if(replace_excluded_form) " [LIEN] " else "")
+    txt <- rm_url(txt, replacement = if(replace_excluded_form) " _LIEN_ " else "")
+    txt <- rm_twitter_url(txt, replacement = if(replace_excluded_form) " _LIEN_ " else "")
   }
 
   if("hashtag" %in% excluded_form){
-    txt <- rm_hash(txt, replacement = if(replace_excluded_form) " [HASHTAG] " else "")
+    txt <- rm_hash(txt, replacement = if(replace_excluded_form) " _HASHTAG_ " else "")
   }
 
   if("date" %in% excluded_form){
-    txt <- rm_date(txt, replacement = if(replace_excluded_form) " [DATE] " else "")
+    txt <- rm_date(txt, replacement = if(replace_excluded_form) " _DATE_ " else "")
   }
 
   if("heure" %in% excluded_form){
-    txt <- gsub("\\d{1,2}(( ?)(\\:|h|H)( ?))(\\d{1,2}(?:[:.]\\d+)?)?", if(!replace_excluded_form)  "" else " [HEURE] ", txt ,perl=TRUE)
-    # txt <- rm_time(txt, replacement = if(replace_excluded_form) "[HEURE]" else "")
+    txt <- gsub("\\d{1,2}(( ?)(\\:|h|H)( ?))(\\d{1,2}(?:[:.]\\d+)?)?", if(!replace_excluded_form)  "" else " _HEURE_ ", txt ,perl=TRUE)
+    # txt <- rm_time(txt, replacement = if(replace_excluded_form) " _HEURE_ " else "")
   }
 
   if("pourcentage" %in% excluded_form){
-    txt <- rm_percent(txt, replacement = if(replace_excluded_form) " [POURCENTAGE] " else "")
+    txt <- rm_percent(txt, replacement = if(replace_excluded_form) " _POURCENTAGE_ " else "")
   }
 
   if("monnaie" %in% excluded_form){
-    txt <- gsub("\\(?[0-9\\.\\,]+\\)?(( ?)(euros|euro|dollars|dollar|pounds|pound|\\€|\\$|£))"%>%force_encoding, if(!replace_excluded_form)  "" else " [MONNAIE] ", txt ,perl=TRUE)
+    txt <- gsub("\\(?[0-9\\.\\,]+\\)?(( ?)(euros|euro|dollars|dollar|pounds|pound|\\€|\\$|£))"%>%force_encoding, if(!replace_excluded_form)  "" else " _MONNAIE_ ", txt ,perl=TRUE)
   }
 
   if("number" %in% excluded_form){
     txt <- gsub("([[:punct:]]|[[:space:]])([[:digit:]]+)([[:punct:]]|[[:space:]])","\\1 \\2 \\3", txt ,perl=TRUE)
-    txt <- rm_number(txt, replacement = if(replace_excluded_form) " [NOMBRE] " else "")
+    txt <- rm_number(txt, replacement = if(replace_excluded_form) " _NOMBRE_ " else "")
   }
 
   if("emoticon" %in% excluded_form){
-    txt <- rm_emoticon(txt, replacement = if(replace_excluded_form) " [EMOTICON] " else "")
+    txt <- gsub("(^|[[:blank:]])((>?[:;=8XB]{1}[-~+o^]?[|\")(&gt;DO>{pP3/]+|</?3|XD+|D:<|x[-~+o^]?[|\")(&gt;DO>{pP3/]+))+([[:blank:]]|$)", if(replace_excluded_form) " _EMOTICON_ " else " ",txt,perl=TRUE)
+    # txt <- rm_emoticon(txt, replacement = if(replace_excluded_form) " _EMOTICON_ " else " ")
   }
 
   if("special_caracter" %in% excluded_form){
-    txt <- gsub("[^\\]\\[\\,\\;\\?\\;\\:\\!\\'\\\"\\-\\_´’[:^punct:]]",if(!replace_excluded_form)  "" else " [CARACTÈRE_SPÉCIAL] ", txt, perl=TRUE)
+    txt <- gsub("[^\\,\\;\\?\\;\\:\\!\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " _CARACTÈRE_SPÉCIAL_ ", txt, perl=TRUE)
   }
 
   if("ponctuation" %in% excluded_form){
-    txt <- gsub("[\\,\\;\\?\\;\\:\\!]+",if(!replace_excluded_form)  "" else " [PONCTUATION] ", txt, perl=TRUE)
+    txt <- gsub("[\\,\\;\\?\\;\\:\\!]+",if(!replace_excluded_form)  "" else " _PONCTUATION_ ", txt, perl=TRUE)
   }
 
   if(min_letter>0){

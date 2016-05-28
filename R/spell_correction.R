@@ -15,19 +15,26 @@
 ####################################################
 
 #' @export spell_correction
-spell_correction <- function(txt, lang="en") {
+spell_correction <- function(txt, lang="en", minimal_occurence = 3, excluded_word = NULL) {
   lang <- match.arg(tolower(lang), c("en", "fr"))
-  dict <- paste0(lang,"_",if(lang=="en") "US" else oupper(lang))
+  dict <- paste0(lang,"_",if(lang=="en") "US" else toupper(lang))
   library(magrittr)
   library(stringr)
   library(hunspell)
+  library(fastmatch)
   # https://github.com/dominiqueemmanuel/hunspell
 
   ## On s'assure que les apostrphe ne sont pas collées aux mots suivants pour éviter les problème de tokenisation
-  txt <- gsub("'|´|’","' ",txt)
+  # Cette partie devra être intégré dans une fonction à part (idiomatic_correction)
+  if(lang=="fr")txt <- gsub("'|´|’"%>%force_encoding,"' ",txt)
+  if(lang=="en"){
+    txt <- gsub("'|´|’"%>%force_encoding," '",txt)
+    txt <- gsub("'s\\b"," is",txt)
+    txt <- gsub("'t\\b"," not",txt)
+  }
 
   ## Pour les autres signes de ponctuation on rajoute un espace avant et après
-  p<-'\\!|\\"|\\$|\\%|\\(|\\)|\\*|\\+|\\,|\\.|\\/|\\:|\\;|\\<|\\=|\\>|\\?|\\[|\\\\|\\]|\\`|\\{|\\||\\}'
+  p<-'\\!|\\"|\\$|\\%|\\(|\\)|\\*|\\+|\\[+]|\\]|\\,|\\.|\\/|\\:|\\;|\\<|\\=|\\>|\\?|\\\\|\\`|\\{|\\||\\}'%>%force_encoding
 
   txt <- gsub(paste0("(",p,")")," \\1 ",txt, perl=TRUE)
 
@@ -38,11 +45,18 @@ spell_correction <- function(txt, lang="en") {
   txt <- str_split(txt," ")[[1]]
   id<-which(txt!="_SEPARATEUR_DE_VERBATIM_" & nchar(txt)>1)
   x<-txt[id]
-
-  y<-hunspell_check(x,dict=dict)
-  e<-hunspell_suggest(x[!y],dict = dict)%>%sapply(function(t)t[1])
-  x[!y][!is.na(e)]<-e[!is.na(e)]
-  txt[id]<-x
+  x<-factor(x)
+  l<-levels(x)
+  n<-table(x)
+  n<-names(n[n<=minimal_occurence])
+  n<-setdiff(n,excluded_word%>%force_encoding)
+  y<-hunspell_check(n,dict=dict)
+  q<-!grepl("[^\\'\\-[:^punct:]]"%>%force_encoding,n,perl=TRUE)
+  e<-hunspell_suggest(n[!y & q],dict = dict)%>%sapply(function(t)t[1])
+  n2<-n
+  n2[!y & q][!is.na(e)]<-e[!is.na(e)]
+  levels(x)<-plyr::mapvalues(l,n,n2,warn_missing = FALSE)%>%force_encoding
+  txt[id]<-as.character(x)
   txt <- paste(txt,collapse=" ")
   txt <- str_trim(str_split(txt,"_SEPARATEUR_DE_VERBATIM_")[[1]])
   return(txt)
