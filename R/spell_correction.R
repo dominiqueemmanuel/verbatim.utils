@@ -75,6 +75,8 @@ spell_correction <- function(txt, lang="en"
 
   y<-hunspell_check(n,dict=dict)
   q<-!grepl("[^\\'\\-[:^punct:]]"%>%force_encoding,n,perl=TRUE)
+
+  # R2fléchir à une version parralélisée (mcapply)
   e<-hunspell_suggest(n[!y & q],dict = dict)%>%sapply(function(t)t[1])
   n2<-n
   n2[!y & q][!is.na(e)]<-e[!is.na(e)]
