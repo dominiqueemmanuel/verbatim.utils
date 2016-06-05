@@ -27,15 +27,6 @@ spell_correction <- function(txt, lang="en"
   library(fastmatch)
   # https://github.com/dominiqueemmanuel/hunspell
 
-  ## On s'assure que les apostrphe ne sont pas collées aux mots suivants pour éviter les problème de tokenisation
-  # Cette partie devra être intégré dans une fonction à part (idiomatic_correction)
-  if(lang=="fr")txt <- gsub("'|´|’"%>%force_encoding,"' ",txt)
-  if(lang=="en"){
-    txt <- gsub("'|´|’"%>%force_encoding," '",txt)
-    txt <- gsub("'s\\b"," is",txt)
-    txt <- gsub("'t\\b"," not",txt)
-  }
-
   ## Pour les autres signes de ponctuation on rajoute un espace avant et après
   p<-'\\!|\\"|\\$|\\%|\\(|\\)|\\*|\\+|\\[+]|\\]|\\,|\\.|\\/|\\:|\\;|\\<|\\=|\\>|\\?|\\\\|\\`|\\{|\\||\\}'%>%force_encoding
   txt <- gsub(paste0("(",p,")")," \\1 ",txt, perl=TRUE)

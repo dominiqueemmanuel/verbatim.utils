@@ -81,9 +81,26 @@ word_exclusion <- function(txt
     txt <- rm_nchar_words(txt, n=min_letter)
   }
   txt <- gsub("[[:space:]]+"," ",txt)
-  names(txt) <- nom
 
-  return(txt)
+
+
+  ## Les _ qui ne sont pas d'une forme créé dans cette fonction sont supprimé
+  p1<-"\\b(\\_?[[:alnum:]]{0,})\\_([[:alnum:]]{0,}\\_?)\\b"
+  p2<-"(\\b((\\_)(([[:upper:]]|\\_){1,})(\\_))\\b)"
+  library(gsubfn)
+  id<-which(!is.na(txt))
+  txt[id]<-gsubfn(p1
+                  ,function(x,...)if(grepl(p2,x)) x else " "
+                  ,x=txt[id]
+                  ,backref = 1
+                  ,perl=FALSE
+                  ,engine="R"
+  )
+
+
+
+names(txt) <- nom
+return(txt)
 }
 
 

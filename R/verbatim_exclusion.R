@@ -18,8 +18,8 @@
 ####################################################
 
 #' @export verbatim_exclusion
-verbatim_exclusion <- function(txt, min_word = 0, treatment = "na") {
-  treatment <- match.arg(tolower(treatment), c("na", "remove"))
+verbatim_exclusion <- function(txt, min_word = 0, treatment = "empty") {
+  treatment <- match.arg(tolower(treatment), c("na", "remove","empty"))
   library(tokenizers)
   # https://github.com/dominiqueemmanuel/tokenizers
 
@@ -28,6 +28,10 @@ verbatim_exclusion <- function(txt, min_word = 0, treatment = "na") {
   txt[id] <- NA
   if (treatment == "remove")
     txt <- na.omit(txt)
+
+  if(treatment == "empty")
+    txt <- ifelse(is.na(txt), "", txt)
+
   return(txt)
 }
 

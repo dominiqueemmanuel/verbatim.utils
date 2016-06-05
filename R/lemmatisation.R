@@ -17,11 +17,43 @@
 
 
 #' @export lemmatisation
-lemmatisation  <- function(txt, lang="en") {
+lemmatisation  <- function(txt, lang="en", mc.cores = 4) {
   lang <- match.arg(tolower(lang), c("en", "fr"))
 
   library(magrittr)
   ## Need Freeling to be installed
+
+  ##### pour la paréllisation, on restreint à 1 coeur pour Windows (limitation du package du package)
+  library(parallel)
+  if(.Platform[[1]]=="windows") {
+    mc.cores <- 1
+  }
+
+
+
+  ## Méthod pour consever l'information de séparateur de verbatims
+  txt <- paste0(txt,collapse=" _MOT_SEPARATEUR_DE_VERBATIM_ ")
+
+
+
+  ##### LE CODE FREELING #####################
+  txt<-str_split(txt," ")%>%unlist
+  txt <- paste(txt,ifelse(txt=="_MOT_SEPARATEUR_DE_VERBATIM_",txt,substr(txt,1,5)),"NCFS000",runif(length(txt)))
+  ##### FIN LE CODE FREELING ###########################
+
+
+
+
+  txt <- str_split(txt," ")
+  txt_lemme <- sapply(txt,function(t)t[[2]])
+  txt_categ <- sapply(txt,function(t)t[[3]])
+  txt_categ[txt_lemme=="_MOT_SEPARATEUR_DE_VERBATIM_"] <- "_MOT_SEPARATEUR_DE_VERBATIM_"
+
+  txt_lemme <- str_trim(str_split(paste(txt_lemme,collapse = " "),"_MOT_SEPARATEUR_DE_VERBATIM_")[[1]])
+  txt_categ <- str_trim(str_split(paste(txt_categ,collapse = " "),"_MOT_SEPARATEUR_DE_VERBATIM_")[[1]])
+
+
+  return(list(txt_lemme=txt_lemme,txt_categ=txt_categ))
 
 
 }
