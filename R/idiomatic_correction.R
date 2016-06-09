@@ -1,4 +1,4 @@
-
+#' @export idiomatic_correction
 idiomatic_correction <- function(txt, lang="en"){
   #On corrige les appostrphes
   txt <- gsub("'|´|’"%>%force_encoding,"'",txt)
