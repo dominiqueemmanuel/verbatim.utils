@@ -108,29 +108,27 @@ topic_clustering_divide <- function(object,id_topic,n=2){
   library(data.table)
   library(dplyr)
 
+  x<-subset(object$rule_table,topic==id_topic)
+  qq<-sapply(sort(unique(x$rule)),function(qq){cat(".")
+    e<-x[x$rule==qq,]$terms
+    colMeans(object$word_vectors[e,,drop=FALSE])
+  })
 
-  id1<-which(object$txtd[,1+id_topic]>0)
-  set.seed(123)
-  X<-object$dtm[id1,]
-  X<-as(X,"dgTMatrix")
-  X<-slam::simple_triplet_matrix(i=X@i+1,j=X@j+1,v=X@x,nrow = nrow(X),ncol=ncol(X))
-  m<-skmeans(x=X,k = n,method="pclust",m=1.25,control=list(verbose=FALSE,start = "S",maxiter=75))
-  topic_matrix<-as(m$membership>0.5,"Matrix")
-
-  txtd<-object$txtd
-  txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t==id_topic) rep(t,n) else t)%>%unlist)]
-  txtd[,1+seq(id_topic,id_topic+n-1)]<-0
-  txtd[id1,1+seq(id_topic,id_topic+n-1)] <- topic_matrix
-
-  colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+  colnames(qq)<-(x%>%group_by(rule)%>%summarise(terms=paste0(terms,collapse="+")))$terms
+  d<-proxy::dist(qq,method="cosine",by_rows = FALSE)
+  H<-hclust(d)
+  H$height<-cummax(pmax(0,H$height))
+  H$height<-(H$height-min(H$height))/(1e-36+max(H$height)-min(H$height))
+  plot(H)
+  H<-cutree(H,min(length(H$height),n))
+  H<-data.frame(rule=seq_along(H),x=H-1)
+  x<-left_join(x,H,by="rule")%>%mutate(topic=topic+x)%>%select(-x)%>%arrange(topic,rule)
+  x<-x%>%group_by(topic)%>%mutate(rule=min_rank(rule))%>%as.data.frame
 
 
-
-  rule <- transform_topic_to_rule(dtm = object$dtm,topic_matrix = txtd[,1+seq(id_topic,id_topic+n-1)]%>%as.matrix%>%as("Matrix"))
-  rule$rule$topic<-rule$rule$topic+id_topic-1
   rule_table <- object$rule_table%>%subset(topic!=id_topic)
   rule_table$topic[rule_table$topic>id_topic]<-rule_table$topic[rule_table$topic>id_topic]+n-1
-  rule_table <- rbind(rule_table, rule$rule)%>%arrange(topic,rule)
+  rule_table <- rbind(rule_table, x)%>%arrange(topic,rule)
 
 
   topic_matrix <- txtd
