@@ -108,27 +108,30 @@ topic_clustering_divide <- function(object,id_topic,n=2){
   library(data.table)
   library(dplyr)
 
-  x<-subset(object$rule_table,topic==id_topic)
-  qq<-sapply(sort(unique(x$rule)),function(qq){cat(".")
-    e<-x[x$rule==qq,]$terms
-    colMeans(object$word_vectors[e,,drop=FALSE])
-  })
+  id1<-which(object$txtd[,1+id_topic]>0)
+    set.seed(123)
+    X<-object$dtm[id1,]
+    X<-as(X,"dgTMatrix")
+    X<-slam::simple_triplet_matrix(i=X@i+1,j=X@j+1,v=X@x,nrow = nrow(X),ncol=ncol(X))
+    m<-skmeans(x=X,k = n,method="pclust",m=1.25,control=list(verbose=FALSE,start = "S",maxiter=75))
+    topic_matrix<-as(m$membership>0.5,"Matrix")
 
-  colnames(qq)<-(x%>%group_by(rule)%>%summarise(terms=paste0(terms,collapse="+")))$terms
-  d<-proxy::dist(qq,method="cosine",by_rows = FALSE)
-  H<-hclust(d)
-  H$height<-cummax(pmax(0,H$height))
-  H$height<-(H$height-min(H$height))/(1e-36+max(H$height)-min(H$height))
-  plot(H)
-  H<-cutree(H,min(length(H$height),n))
-  H<-data.frame(rule=seq_along(H),x=H-1)
-  x<-left_join(x,H,by="rule")%>%mutate(topic=topic+x)%>%select(-x)%>%arrange(topic,rule)
-  x<-x%>%group_by(topic)%>%mutate(rule=min_rank(rule))%>%as.data.frame
+    txtd<-object$txtd
+    txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t==id_topic) rep(t,n) else t)%>%unlist)]
+    txtd[,1+seq(id_topic,id_topic+n-1)]<-0
+    txtd[id1,1+seq(id_topic,id_topic+n-1)] <- topic_matrix
 
+      colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+
+
+      rule <- transform_topic_to_rule(dtm = object$dtm,topic_matrix = txtd[,1+seq(id_topic,id_topic+n-1)]%>%as.matrix%>%as("Matrix"),ignore_rule_table = object$rule_table%>%subset(!(topic %in% id_topic)))
+
+      rule$rule$topic<-rule$rule$topic+id_topic-1
 
   rule_table <- object$rule_table%>%subset(topic!=id_topic)
   rule_table$topic[rule_table$topic>id_topic]<-rule_table$topic[rule_table$topic>id_topic]+n-1
-  rule_table <- rbind(rule_table, x)%>%arrange(topic,rule)
+  rule_table <- rbind(rule_table, rule$rule)%>%arrange(topic,rule)
+
 
 
   topic_matrix <- txtd
@@ -147,7 +150,7 @@ topic_clustering_divide <- function(object,id_topic,n=2){
               ,dtm = object$dtm))
 
 }
-transform_topic_to_rule <- function(dtm, topic_matrix){
+transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL){
 
   # if(is.null(colnames(topic_matrix)))
     colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
@@ -172,11 +175,22 @@ transform_topic_to_rule <- function(dtm, topic_matrix){
   rules2@rhs@itemInfo[,1]<-as.character(rules2@rhs@itemInfo[,1])%>%force_encoding
   q<-lapply(seq(ncol(topic_matrix)),function(tt){cat(".")
     s<-paste0("^",colnames(topic_matrix)[tt],"$")
-
+if(is.null(ignore_rule_table)){
     id<-which(
       Matrix::colSums(rules2@lhs@data[which(grepl(s,rules2@lhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])==0
       & Matrix::colSums(rules2@rhs@data[which(grepl(s,rules2@rhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])>0
     )
+} else {
+  s2<-ignore_rule_table%>%arrange(topic,rule,terms)%>%group_by(topic,rule)%>%summarise(s2=paste0("(",paste0(paste0("(?=.*",terms,")"),collapse=""),")"))
+  s2<-s2[!duplicated(s2$s2),]
+  s2<-paste0(s2$s2,collapse="|")
+  id<-which(
+    Matrix::colSums(rules2@lhs@data[which(grepl(s,rules2@lhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])==0
+    & Matrix::colSums(rules2@rhs@data[which(grepl(s,rules2@rhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])>0
+    & Matrix::colSums(rules2@lhs@data[which(grepl(s2,rules2@lhs@itemInfo[,1],perl=TRUE)),,drop=FALSE])==0
+  )
+}
+    length(id)
     id<-id[order(rules2@quality[id,]$support,decreasing=TRUE)]
     id<-id[seq_along(id)<=100]
     rules3<-rules2[id]
