@@ -291,3 +291,85 @@ if(is.null(ignore_rule_table)){
 
 
 
+
+
+#' @export topic_clustering_remove
+topic_clustering_remove <- function(object,id_topic){
+  library(text2vec)
+  library(dplyr)
+  library(Matrix)
+  library(skmeans)
+  library(arules)
+  library(arulesViz)
+  library(data.table)
+  library(dplyr)
+  topic_matrix <- object$topic_matrix
+  topic_matrix <- topic_matrix[,which(!(seq(ncol(topic_matrix)) %in% id_topic)),drop=FALSE]
+
+  txtd<-object$txtd
+  txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t %in% id_topic) NULL else t)%>%unlist)]
+  colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+
+
+
+  rule_table <- object$rule_table%>%subset(!(topic %in% id_topic))
+  rule_table$topic<-dplyr::dense_rank(rule_table$topic)
+  rule_table <- rule_table%>%arrange(topic,rule)
+
+
+
+  return(list(word_distance_function=object$word_distance_function
+              ,rule_table = rule_table
+              ,topic_matrix=topic_matrix
+              ,vocab=object$vocab
+              ,word_vectors=object$word_vectors
+              ,txtd=txtd
+              ,dtm = object$dtm))
+
+}
+
+
+#' @export topic_clustering_merge
+topic_clustering_merge <- function(object,id_topic){
+  library(text2vec)
+  library(dplyr)
+  library(Matrix)
+  library(skmeans)
+  library(arules)
+  library(arulesViz)
+  library(data.table)
+  library(dplyr)
+
+  topic_matrix<-object$topic_matrix
+  id_topic<-sort(id_topic)
+  id_topic1<-id_topic[1]
+  id_topic2<-id_topic[-1]
+
+  topic_matrix[,id_topic1]<-apply(topic_matrix[,id_topic,drop=FALSE],1,max)
+  topic_matrix <- topic_matrix[,-id_topic2]
+
+  txtd<-object$txtd
+  txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t %in% id_topic2) NULL else t)%>%unlist)]
+  colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+
+
+  x<-object$rule_table%>%subset((topic %in% id_topic))
+  x$rule<- dplyr::dense_rank(1000*x$rule+x$topic)
+  x<-x%>%mutate(topic=ifelse(topic %in% id_topic2,id_topic1,topic))
+
+  rule_table <- object$rule_table%>%subset(!(topic %in% id_topic))
+  rule_table <- rbind(rule_table, x)
+  rule_table$topic<-dplyr::dense_rank(rule_table$topic)
+  rule_table<-rule_table%>%arrange(topic,rule)
+
+
+
+  return(list(word_distance_function=object$word_distance_function
+              ,rule_table = rule_table
+              ,topic_matrix=topic_matrix
+              ,vocab=object$vocab
+              ,word_vectors=object$word_vectors
+              ,txtd=txtd
+              ,dtm = object$dtm))
+
+}

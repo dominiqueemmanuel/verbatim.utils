@@ -1,7 +1,9 @@
 #' @export intermediary_report
 intermediary_report <- function(file,object,global_table){
+  print("Begin intermediary report...")
+  library(dplyr)
 pdf(file,width=20,height=ceiling(20/(2)))
-for(kk in seq_along(verbatim_rv$global_table[,1])){
+for(kk in seq_along(global_table[,1])){
   cat(".")
   tab1<-object$rule_table%>%subset(topic==kk)
   z<-tab1$terms
@@ -71,6 +73,6 @@ for(kk in seq_along(verbatim_rv$global_table[,1])){
 }
 dev.off()
 
-
+print("... End intermediary report")
 }
 

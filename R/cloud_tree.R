@@ -105,11 +105,12 @@ cloud_tree <-function(dtm,automatic_color=TRUE,default_color="steelblue",dtm_bas
 
     if(nrow(d0)>=3){
       set.seed(123)
-      la<-zg<-smacofSym(d0,ndim = 2,init=jitter(cbind(cos(C/max(C+1)*2*pi),sin(C/max(C+1)*2*pi))))$conf
+      # la<-zg<-smacofSym(d0,ndim = 2,init=jitter(cbind(cos(C/max(C+1)*2*pi),sin(C/max(C+1)*2*pi))))$conf
+      # la<-zg<-smacofSym(d0,ndim = 2,init=jitter(cbind(cos(C/max(C+1)*2*pi),sin(C/max(C+1)*2*pi))),itmax=2)$conf
       set.seed(123)
       # la<-layout.kamada.kawai(gg,params=list(sart=rbind(zg,c(0,0)),niter=2000))
-      tryCatch({la<-layout_with_gem(gg,coords =zg, maxiter  =5)},error=function(e)NULL)
-      tryCatch({la<-layout_with_kk(gg,coords=la,maxiter  =100000)},error=function(e)NULL)
+      tryCatch({la<-layout_with_fr(gg, niter  =5000)},error=function(e)NULL)
+      tryCatch({la<-layout_with_kk(gg,coords=la,maxiter  =5)},error=function(e)NULL)
       la<-la[seq(vcount(g)),,drop=FALSE]
     }
     if(nrow(d0)<3){
