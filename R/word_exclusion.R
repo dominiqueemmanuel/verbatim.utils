@@ -28,6 +28,7 @@ word_exclusion <- function(txt
   library(magrittr)
   library(stringr)
   library(qdapRegex)
+  library(stringi)
 
   if("email" %in% excluded_form){
     txt <- rm_email(txt, replacement = if(replace_excluded_form) " _EMAIL_ " else "")
@@ -70,17 +71,17 @@ word_exclusion <- function(txt
   }
 
   if("special_caracter" %in% excluded_form){
-    txt <- gsub("[^\\,\\;\\?\\;\\:\\!\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " _CARACTÈRE_SPÉCIAL_ ", txt, perl=TRUE)
+    txt <- gsub("[^\\,\\;\\?\\;\\:\\!\\(\\)\\–\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " _CARACTÈRE_SPÉCIAL_ ", txt, perl=TRUE)
   }
 
   if("ponctuation" %in% excluded_form){
-    txt <- gsub("[\\,\\;\\?\\;\\:\\!]+",if(!replace_excluded_form)  "" else " _PONCTUATION_ ", txt, perl=TRUE)
+    txt <- gsub("[\\,\\;\\?\\;\\:\\!\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " _PONCTUATION_ ", txt, perl=TRUE)
   }
 
   if(min_letter>0){
     txt <- rm_nchar_words(txt, n=min_letter)
   }
-  txt <- gsub("[[:space:]]+"," ",txt)
+  txt <- stri_replace_all_regex(txt,"[[:space:]]+"," ")
 
 
 
@@ -117,3 +118,4 @@ return(txt)
 # )
 #
 # word_exclusion(txt,min_letter = 1)
+

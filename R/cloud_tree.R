@@ -1,5 +1,5 @@
 #' @export cloud_tree
-cloud_tree <-function(dtm,automatic_color=TRUE,default_color="steelblue",dtm_base=NULL,method="indice"){
+cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="steelblue",dtm_base=NULL,method="indice"){
   library(igraph)
   library(shinythemes)
   library(ggplot2)
@@ -33,7 +33,11 @@ cloud_tree <-function(dtm,automatic_color=TRUE,default_color="steelblue",dtm_bas
   ## wordcloud sera appelé via des ::
   if(nrow(dtm)>1 & ncol(dtm)>1){
     dtm0<-cBind(dtm[,1,drop=FALSE],dtm)
+    if(is.null(word_vectors)){
     db<-as.matrix(proxy::dist(as.matrix(dtm0>0),by_rows = FALSE,method="Phi"))
+    } else {
+      db<-as.matrix(proxy::dist(as.matrix(word_vectors),by_rows = TRUE,method="cosine"))
+    }
     d<-round(db/max(db,na.rm=TRUE),8)
     d[is.na(d)]<-1
     d<-d[-1,-1,drop=FALSE]
@@ -64,7 +68,7 @@ cloud_tree <-function(dtm,automatic_color=TRUE,default_color="steelblue",dtm_bas
     E(mst)$weight<-ifelse(E(mst)$weight>=10,E(mst)$weight-10,E(mst)$weight)
     E(mst)$weight<- max(nd)-E(mst)$weight
     g<-mst
-    g<-delete.edges(g,which(E(g)$weight==0))
+    g<-igraph::delete.edges(g,which(E(g)$weight==0))
     gg<-g
     cg0<-clusters(gg)
     # colC<-rainbow(length(unique(C)))

@@ -9,92 +9,104 @@
 # txt<-gsub("[[:space:]]+"," ",txt)
 
 #' @export topic_clustering
-topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCTUATION_"){
-library(text2vec)
-library(dplyr)
-library(Matrix)
-library(skmeans)
-library(arules)
-library(arulesViz)
-library(data.table)
+topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCTUATION_",term_count_min = 5){
+  library(text2vec)
   library(dplyr)
+  library(Matrix)
+  library(skmeans)
+  library(arules)
+  library(arulesViz)
+  library(data.table)
+  library(dplyr)
+  library(stringi)
+   # save(file="do2",list=ls())
+   # stop("xx")
+   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")
 
-txtd<-str_split(txt,sep_phrase)
-a<-lapply(seq_along(txtd),function(t)rep(t,length(txtd[[t]])))
-txtd<-data.frame(id=unlist(a),txt=str_trim(unlist(txtd)),stringsAsFactors  =FALSE)
+  txtd<-stri_split_regex(txt,sep_phrase,case_insensitive=TRUE)
+  a<-lapply(seq_along(txtd),function(t)rep(t,length(txtd[[t]])))
+  txtd<-data.frame(id=unlist(a),txt=str_trim(unlist(txtd)),stringsAsFactors  =FALSE)
 
-stem_tokenizer <- function(x) {
-  word_tokenizer(x)%>% lapply(SnowballC::wordStem,language=lang)
-   }
+  stem_tokenizer <- function(x) {
+    word_tokenizer(x)%>% lapply(SnowballC::wordStem,language=lang)
+  }
 
-it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
-vocab <- create_vocabulary(it,
-                           ngram = c(ngram_min = 1L, ngram_max = 1L)
-                           ,stopwords = tm::stopwords(lang)
-) %>% prune_vocabulary(term_count_min = 5,term_count_max = 0.4*length(txt),max_number_of_terms=8000)
-vocab$vocab$terms<-force_encoding(vocab$vocab$terms)
-
-
-q<-str_split(txtd$txt," ")
-a<-lapply(seq_along(q),function(t)rep(t,length(q[[t]])))
-q<-data.frame(id=unlist(a),terms=unlist(q),stringsAsFactors  =FALSE)
-q<-inner_join(q,vocab$vocab%>%select(terms),by="terms")
-q<-q%>%group_by(id)%>%summarise(txt=paste(terms,collapse=" "),n=length(terms))
-skip_grams_window <- max(3,min(6,quantile(q$n,0.5)))
-
-vocab_v <- vocab_vectorizer(vocab, grow_dtm = FALSE, skip_grams_window = skip_grams_window)
-
-it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
-tcm <- create_tcm(it, vocab_v)
-
-it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
-dtm <- create_dtm(it, vocab_v)
-
-# RcppParallel::setThreadOptions(numThreads = 8)
-set.seed(123)
-fit <- glove(tcm = tcm, shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),max(2*nb_topic,10)),
-             x_max = 10, learning_rate = 0.05,
-             num_iters = 150, grain_size = 1e5,
-             max_cost = 50, convergence_threshold = 0.005)
-word_vectors <- fit$word_vectors[[1]] + fit$word_vectors[[2]]
-rownames(word_vectors) <- force_encoding(rownames(tcm))
+  it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
+  vocab <- create_vocabulary(it,
+                             ngram = c(ngram_min = 1L, ngram_max = 1L)
+                             # ,stopwords = tm::stopwords(lang)
+  ) %>% prune_vocabulary(term_count_min = term_count_min,term_count_max = 0.4*length(txt),max_number_of_terms=8000)
+  vocab$vocab$terms<-force_encoding(vocab$vocab$terms)
 
 
+  q<-str_split(txtd$txt," ")
+  a<-lapply(seq_along(q),function(t)rep(t,length(q[[t]])))
+  q<-data.frame(id=unlist(a),terms=unlist(q),stringsAsFactors  =FALSE)
+  q<-inner_join(q,vocab$vocab%>%select(terms),by="terms")
+  q<-q%>%group_by(id)%>%summarise(txt=paste(terms,collapse=" "),n=length(terms))
+  skip_grams_window <- max(3,min(6,quantile(q$n,0.5)))
+
+  vocab_v <- vocab_vectorizer(vocab, grow_dtm = FALSE, skip_grams_window = skip_grams_window)
+
+  it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
+  tcm <- create_tcm(it, vocab_v)
+
+  it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
+  dtm <- create_dtm(it, vocab_v)
+  colnames(dtm) <- force_encoding(colnames(dtm))
+  txtp<-txtd$txt
+  # RcppParallel::setThreadOptions(numThreads = 8)
+  set.seed(123)
+  fit <- glove(tcm = tcm, shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),max(2*nb_topic,10)),
+               x_max = 10, learning_rate = 0.05,
+               num_iters = 150, grain_size = 1e5,
+               max_cost = 50, convergence_threshold = 0.005)
+  word_vectors <- fit$word_vectors[[1]] + fit$word_vectors[[2]]
+  rownames(word_vectors) <- force_encoding(rownames(tcm))
 
 
 
-M2<-transform_tfidf(dtm)
-e<-Matrix::rowSums(dtm>0)
-e<-ifelse(e==0,1,e)
-M2<-M2/e
-M2<-M2%*%word_vectors
-M2<-as.matrix(M2)
-e<-Matrix::rowSums(M2^2)
-id<-which(e>1e-6)
-
-set.seed(123)
-m<-skmeans(x=M2[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=1.05,control=list(verbose=FALSE,start = "S",maxiter=75))
-topic_matrix<-as(m$membership>0.9,"Matrix")
-colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
-rule <- transform_topic_to_rule(dtm = dtm[id,],topic_matrix = topic_matrix)
 
 
-word_distance_function <- word_distance(word_vectors)
+  M2<-transform_tfidf(dtm)
+  e<-Matrix::rowSums(dtm>0)
+  e<-ifelse(e==0,1,e)
+  M2<-M2/e
+  M2<-M2%*%word_vectors
+  M2<-as.matrix(M2)
+  e<-Matrix::rowSums(M2^2)
+  id<-which(e>1e-6)
 
-# new_topic_matrix <-
-# id,]%>%select(id)
-txtd <- data.frame(id=txtd$id)
-for(k in seq(ncol(rule$new_topic_matrix))){
-  txtd[[colnames(rule$new_topic_matrix)[k]]]<-0
-  txtd[[colnames(rule$new_topic_matrix)[k]]][id]<-rule$new_topic_matrix[,k]
-}
-topic_matrix<-melt(txtd,id.vars="id")
-head(topic_matrix)
-topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
-topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
-topic_matrix<-topic_matrix[order(topic_matrix$id),]%>%select(-id)
+  set.seed(123)
+  m<-skmeans(x=M2[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=1.05,control=list(verbose=FALSE,start = "S",maxiter=75))
+  topic_matrix<-as(m$membership>0.9,"Matrix")
+  colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
+  rule <- transform_topic_to_rule(dtm = dtm[id,],topic_matrix = topic_matrix,word_vectors = word_vectors)
 
-return(list(word_distance_function=word_distance_function,rule_table = rule$rule,topic_matrix=topic_matrix,vocab=vocab,word_vectors=word_vectors,txtd=txtd,dtm = dtm))
+
+  word_distance_function <- word_distance(word_vectors)
+
+  # new_topic_matrix <-
+  # id,]%>%select(id)
+  txtd <- data.frame(id=txtd$id)
+  for(k in seq(ncol(rule$new_topic_matrix))){
+    txtd[[colnames(rule$new_topic_matrix)[k]]]<-0
+    txtd[[colnames(rule$new_topic_matrix)[k]]][id]<-rule$new_topic_matrix[,k]
+  }
+  topic_matrix<-melt(txtd,id.vars="id")
+  head(topic_matrix)
+  topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
+  topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
+  topic_matrix<-topic_matrix[order(topic_matrix$id),]%>%select(-id)
+
+  return(list(word_distance_function=word_distance_function
+              ,rule_table = rule$rule
+              ,topic_matrix=topic_matrix
+              ,vocab=vocab
+              ,word_vectors=word_vectors
+              ,txtd=txtd
+              ,dtm = dtm
+              ,txtp=txtp))
 }
 
 #' @export topic_clustering_divide
@@ -109,24 +121,32 @@ topic_clustering_divide <- function(object,id_topic,n=2){
   library(dplyr)
 
   id1<-which(object$txtd[,1+id_topic]>0)
-    set.seed(123)
-    X<-object$dtm[id1,]
-    X<-as(X,"dgTMatrix")
-    X<-slam::simple_triplet_matrix(i=X@i+1,j=X@j+1,v=X@x,nrow = nrow(X),ncol=ncol(X))
-    m<-skmeans(x=X,k = n,method="pclust",m=1.25,control=list(verbose=FALSE,start = "S",maxiter=75))
-    topic_matrix<-as(m$membership>0.5,"Matrix")
+  set.seed(123)
+  X<-object$dtm[id1,]
+  X<-as(X,"dgTMatrix")
+  X<-slam::simple_triplet_matrix(i=X@i+1,j=X@j+1,v=X@x,nrow = nrow(X),ncol=ncol(X))
+  m<-skmeans(x=X,k = n,method="pclust",m=1.25,control=list(verbose=FALSE,start = "S",maxiter=75))
+  topic_matrix<-as(m$membership>0.5,"Matrix")
 
-    txtd<-object$txtd
-    txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t==id_topic) rep(t,n) else t)%>%unlist)]
-    txtd[,1+seq(id_topic,id_topic+n-1)]<-0
-    txtd[id1,1+seq(id_topic,id_topic+n-1)] <- topic_matrix
-
-      colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+  txtd<-object$txtd
+  txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t==id_topic) rep(t,n) else t)%>%unlist)]
+  txtd[,1+seq(id_topic,id_topic+n-1)]<-0
+  txtd[id1,1+seq(id_topic,id_topic+n-1)] <- topic_matrix
 
 
-      rule <- transform_topic_to_rule(dtm = object$dtm,topic_matrix = txtd[,1+seq(id_topic,id_topic+n-1)]%>%as.matrix%>%as("Matrix"),ignore_rule_table = object$rule_table%>%subset(!(topic %in% id_topic)))
 
-      rule$rule$topic<-rule$rule$topic+id_topic-1
+  rule <- transform_topic_to_rule(dtm = object$dtm,topic_matrix = txtd[,1+seq(id_topic,id_topic+n-1)]%>%as.matrix%>%as("Matrix"),ignore_rule_table = object$rule_table%>%subset(!(topic %in% id_topic)))
+
+  for(k in seq(id_topic,id_topic+n-1)){
+
+    txtd[id1,1+k]<-rule$new_topic_matrix[id1,1+k-id_topic]
+  }
+
+  colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+
+
+
+  rule$rule$topic<-rule$rule$topic+id_topic-1
 
   rule_table <- object$rule_table%>%subset(topic!=id_topic)
   rule_table$topic[rule_table$topic>id_topic]<-rule_table$topic[rule_table$topic>id_topic]+n-1
@@ -147,15 +167,22 @@ topic_clustering_divide <- function(object,id_topic,n=2){
               ,vocab=object$vocab
               ,word_vectors=object$word_vectors
               ,txtd=txtd
-              ,dtm = object$dtm))
+              ,dtm = object$dtm
+              ,txtp=object$txtp))
 
 }
-transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL){
 
+
+transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,word_vectors=NULL){
+  # save(file="do",list=ls())
+  # stop('xxx')
   # if(is.null(colnames(topic_matrix)))
-    colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
+  colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
   nb_topic <- ncol(topic_matrix)
-
+ if(!is.null(word_vectors)){
+   y<-t(topic_matrix)%*%(dtm)%*%word_vectors
+   y<-y%>%as.matrix
+ }
   B<-as(cbind(topic_matrix,dtm>0),"nMatrix")
   colnames(B)<-force_encoding(colnames(B))
   base<-new("itemMatrix",
@@ -165,39 +192,65 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL){
   )
   # colnames(base)
   set.seed(123)
-  confidence <- min(5/nb_topic,1/2)
-  support = max(0.0001,3/nrow(dtm))
-  rules <- apriori(base,parameter = list(support = support, confidence = confidence,minlen=2,maxlen=4,smax=0.4))
+  confidence <- 0.4#min(5/nb_topic,1/4)
+  support = max(0.0002,5/nrow(dtm))
+  rules <- apriori(base,parameter = list(support = support, confidence = confidence,minlen=2,maxlen=4,smax=0.4,arem="info",minval=5e-3,aval=TRUE))
   rules
+  # print(paste0("Length (1) = ",length(rules)))
   rules2<-arules::subset(rules,lift > 2)
+  # print(paste0("Length (2) = ",length(rules2)))
   rules2
   rules2@lhs@itemInfo[,1]<-as.character(rules2@lhs@itemInfo[,1])%>%force_encoding
   rules2@rhs@itemInfo[,1]<-as.character(rules2@rhs@itemInfo[,1])%>%force_encoding
   q<-lapply(seq(ncol(topic_matrix)),function(tt){cat(".")
     s<-paste0("^",colnames(topic_matrix)[tt],"$")
-if(is.null(ignore_rule_table)){
-    id<-which(
-      Matrix::colSums(rules2@lhs@data[which(grepl(s,rules2@lhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])==0
-      & Matrix::colSums(rules2@rhs@data[which(grepl(s,rules2@rhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])>0
-    )
-} else {
-  s2<-ignore_rule_table%>%arrange(topic,rule,terms)%>%group_by(topic,rule)%>%summarise(s2=paste0("(",paste0(paste0("(?=.*",terms,")"),collapse=""),")"))
-  s2<-s2[!duplicated(s2$s2),]
-  s2<-paste0(s2$s2,collapse="|")
-  id<-which(
-    Matrix::colSums(rules2@lhs@data[which(grepl(s,rules2@lhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])==0
-    & Matrix::colSums(rules2@rhs@data[which(grepl(s,rules2@rhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])>0
-    & Matrix::colSums(rules2@lhs@data[which(grepl(s2,rules2@lhs@itemInfo[,1],perl=TRUE)),,drop=FALSE])==0
-  )
-}
-    length(id)
-    id<-id[order(rules2@quality[id,]$support,decreasing=TRUE)]
-    id<-id[seq_along(id)<=100]
+    if(is.null(ignore_rule_table)){
+      id<-which(
+        Matrix::colSums(rules2@lhs@data[which(grepl(s,rules2@lhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])==0
+        & Matrix::colSums(rules2@rhs@data[which(grepl(s,rules2@rhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])>0
+      )
+    } else {
+      s2<-ignore_rule_table%>%arrange(topic,rule,terms)%>%group_by(topic,rule)%>%summarise(s2=paste0("(",paste0(paste0("(?=.*",terms,")"),collapse=""),")"))
+      s2<-s2[!duplicated(s2$s2),]
+      s2<-paste0(s2$s2,collapse="|")
+      id<-which(
+        Matrix::colSums(rules2@lhs@data[which(grepl(s,rules2@lhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])==0
+        & Matrix::colSums(rules2@rhs@data[which(grepl(s,rules2@rhs@itemInfo[,1],ignore.case=TRUE)),,drop=FALSE])>0
+        & Matrix::colSums(rules2@lhs@data[which(grepl(s2,rules2@lhs@itemInfo[,1],perl=TRUE)),,drop=FALSE])==0
+      )
+    }
+
+    if(!is.null(word_vectors) & length(id)>=2){
+      r<-rules[id]
+      x<-r@lhs@data[-seq(ncol(topic_matrix)),]
+      x<-lapply(seq(ncol(x)),function(t)which(x[,t]>0))
+      d<-sapply(x,function(t){
+        d<-proxy::dist(word_vectors[t,,drop=FALSE],y[tt,,drop=FALSE],method="cosine")
+        max(d)
+      })
+
+      id<-id[order(d)]
+      id<-id[seq_along(id)<=40]
+      rules3<-rules2[id]
+
+      id<-order(rules3@quality$info,decreasing=TRUE)
+      id<-id[seq_along(id)<=20]
+      rules4<-rules3[id]
+
+      id<-order(rules4@quality$support,decreasing=TRUE)
+      id<-id[seq_along(id)<=10]
+      rules4<-rules4[id]
+    } else {
+    id<-id[order(rules2@quality[id,]$info,decreasing=TRUE)]
+    id<-id[seq_along(id)<=30]
     rules3<-rules2[id]
-    rules4<-rules3
 
-
-
+    id<-order(rules3@quality$support,decreasing=TRUE)
+    id<-id[seq_along(id)<=10]
+    rules4<-rules3[id]
+    }
+    # rules4<-rules3
+    # print(paste0("Length (3 -",tt,") = ",length(rules4)))
 
     tryCatch({
       # rules4@quality$lift<-1
@@ -216,6 +269,8 @@ if(is.null(ignore_rule_table)){
         rules4 <- rules4[-redundant]
       }},error=function(e)NULL)
 
+
+
     e<-rules4@quality
     n<-nrow(dtm)
     n_a_b<-e$support*nrow(dtm)
@@ -228,46 +283,58 @@ if(is.null(ignore_rule_table)){
     rules4@quality$p.value<-x
     id<-rules4@quality$p.value<=0.05
     rules4<-rules4[id]
+    # print(paste0("Length (4 -",tt,") = ",length(rules4)))
     rules4
+
+    if(FALSE){
     if(length(rules4)>0){
-    qq<-Matrix::t(Matrix::t(as(B,"dgCMatrix")%*%rules4@lhs@data)==Matrix::colSums(rules4@lhs@data))
-    qq2<-(Matrix::t(qq[topic_matrix[,tt]==1,,drop=FALSE])%*%(1-qq[topic_matrix[,tt]==1,,drop=FALSE]))/
-      (Matrix::t(qq)%*%(1-qq))
-    qq2@x<-ifelse(is.na(qq2@x),0,qq2@x)
-    diag(qq2)<-1
-    qq3<-(Matrix::t(qq[topic_matrix[,tt]==1,,drop=FALSE])%*%(1-qq[topic_matrix[,tt]==1,,drop=FALSE]))/nrow(qq)
-    qq2@x<-ifelse(is.na(qq2@x),1,qq2@x)
-    qq2<-as.matrix((qq2<confidence) | (qq3<support))
-    diag(qq2)<-0
-    library(igraph)
-    id<-seq(ncol(qq2))
-    set.seed(1234)
-    qq3<-t(qq2)
-    id<-which(Matrix::colSums(qq3)==0)
-    while(sum(qq3==1)>0){
-      t<-which(qq3==1,arr.ind=TRUE)
-      m<-which.min(t[,2]-1e-4*t[,1])
-       # if(t[m,1]==1)stop("xx")
-      if(sum(qq3[-t[m,1],t[m,2]])>0){
-        qq3[t[m,1],t[m,2]]<-0
-      } else {
-        qq3[t[m,1],t[m,2]]<-2
-        id<-c(id,t[m,1])
+
+      qq<-Matrix::t(Matrix::t(as(B,"dgCMatrix")%*%rules4@lhs@data)==Matrix::colSums(rules4@lhs@data))
+      qq2<-(Matrix::t(qq[topic_matrix[,tt]==1,,drop=FALSE])%*%(1-qq[topic_matrix[,tt]==1,,drop=FALSE]))/
+        (Matrix::t(qq)%*%(1-qq))
+      qq2@x<-ifelse(is.na(qq2@x),0,qq2@x)
+
+      diag(qq2)<-1
+      qq3<-(Matrix::t(qq[topic_matrix[,tt]==1,,drop=FALSE])%*%(1-qq[topic_matrix[,tt]==1,,drop=FALSE]))/nrow(qq)
+      qq2@x<-ifelse(is.na(qq2@x),1,qq2@x)
+      qq2<-as.matrix((qq2<confidence) | (qq3<support))
+      # qq2<-as.matrix((qq2<0.75*confidence))
+      diag(qq2)<-0
+      library(igraph)
+      id<-seq(ncol(qq2))
+      set.seed(1234)
+      qq3<-t(qq2)
+      id<-which(Matrix::colSums(qq3)==0)
+      while(sum(qq3==1)>0){
+        t<-which(qq3==1,arr.ind=TRUE)
+        m<-which.min(t[,2]-1e-4*t[,1])
+        # if(t[m,1]==1)stop("xx")
+        if(sum(qq3[-t[m,1],t[m,2]])>0){
+          qq3[t[m,1],t[m,2]]<-0
+        } else {
+          qq3[t[m,1],t[m,2]]<-2
+          id<-c(id,t[m,1])
+        }
+
       }
+      id<-unique(id)
+      # which(rowSums(qq2[-id,id])==0)
+      # g<-graph_from_adjacency_matrix(t(qq2),mode="directed")
+      # V(g)$color<-ifelse(seq(ncol(qq2)) %in% id,"green","red")
+      #
+      #   visNetwork::visIgraph(g)%>%visNetwork::visOptions(highlightNearest=TRUE,nodesIdSelection=TRUE)
+      #   length(id)
 
+      rules4<-rules4[id]
+      # print(paste0("Length (5 -",tt,") = ",length(rules4)))
     }
-    id<-unique(id)
-    # which(rowSums(qq2[-id,id])==0)
-    # g<-graph_from_adjacency_matrix(t(qq2),mode="directed")
-    # V(g)$color<-ifelse(seq(ncol(qq2)) %in% id,"green","red")
-    #
-    #   visNetwork::visIgraph(g)%>%visNetwork::visOptions(highlightNearest=TRUE,nodesIdSelection=TRUE)
-    #   length(id)
-
-    rules4<-rules4[id]
-    }
+#
+#     print(" ")
+#     print(" ")
+}
     rules4
   })
+
   id<-which(sapply(q,length)>0)
   q<-q[id]
 
@@ -324,7 +391,8 @@ topic_clustering_remove <- function(object,id_topic){
               ,vocab=object$vocab
               ,word_vectors=object$word_vectors
               ,txtd=txtd
-              ,dtm = object$dtm))
+              ,dtm = object$dtm
+              ,txtp=object$txtp))
 
 }
 
@@ -370,6 +438,119 @@ topic_clustering_merge <- function(object,id_topic){
               ,vocab=object$vocab
               ,word_vectors=object$word_vectors
               ,txtd=txtd
-              ,dtm = object$dtm))
+              ,dtm = object$dtm
+              ,txtp=object$txtp))
+
+}
+
+
+
+transform_rule_to_topic <- function(dtm,rule_table){
+  topic <- sort(unique(rule_table$topic))
+
+  qq<-sapply(topic,function(qq){cat(".")
+    q<-subset(rule_table,topic==qq)
+    qq<-sapply(sort(unique(q$rule)),function(r){
+      t<-subset(q,rule==r)$terms
+      rowSums(dtm[,t,drop=FALSE]>0)==length(t)
+    })
+    1*(rowSums(qq)>0)
+  })
+
+  return(qq)
+
+
+}
+
+
+
+#' @export topic_clustering_modify
+topic_clustering_modify <- function(object,rule_table){
+  library(text2vec)
+  library(dplyr)
+  library(Matrix)
+  library(skmeans)
+  library(arules)
+  library(arulesViz)
+  library(data.table)
+  library(dplyr)
+
+  id_topic <- sort(unique(rule_table$topic))
+
+  txtd<-object$txtd
+  topic_matrix <- transform_rule_to_topic(object$dtm,rule_table)
+  txtd[,1+id_topic] <- topic_matrix
+
+
+
+
+
+  new_rule_table <- object$rule_table%>%subset(!c(topic %in% id_topic))
+  new_rule_table <- rbind(new_rule_table, rule_table)%>%arrange(topic,rule)
+
+
+
+  topic_matrix <- txtd
+  topic_matrix<-melt(topic_matrix,id.vars="id")
+  head(topic_matrix)
+  topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
+  topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
+  topic_matrix<-topic_matrix[order(topic_matrix$id),]%>%select(-id)
+
+  colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+  return(list(word_distance_function=object$word_distance_function
+              ,rule_table = new_rule_table
+              ,topic_matrix=topic_matrix
+              ,vocab=object$vocab
+              ,word_vectors=object$word_vectors
+              ,txtd=txtd
+              ,dtm = object$dtm
+              ,txtp=object$txtp))
+
+}
+
+
+#' @export topic_clustering_add
+topic_clustering_add <- function(object,rule_table){
+  library(text2vec)
+  library(dplyr)
+  library(Matrix)
+  library(skmeans)
+  library(arules)
+  library(arulesViz)
+  library(data.table)
+  library(dplyr)
+
+  id_topic <- max(object$rule_table$topic)+1
+  rule_table$topic<-id_topic
+
+  txtd<-object$txtd
+  topic_matrix <- transform_rule_to_topic(object$dtm,rule_table)
+  txtd <- cbind(txtd,topic_matrix)
+
+
+
+
+
+  new_rule_table <- object$rule_table
+  new_rule_table <- rbind(new_rule_table, rule_table)%>%arrange(topic,rule)
+
+
+
+  topic_matrix <- txtd
+  topic_matrix<-melt(topic_matrix,id.vars="id")
+  head(topic_matrix)
+  topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
+  topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
+  topic_matrix<-topic_matrix[order(topic_matrix$id),]%>%select(-id)
+  colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
+  return(list(word_distance_function=object$word_distance_function
+              ,rule_table = new_rule_table
+              ,topic_matrix=topic_matrix
+              ,vocab=object$vocab
+              ,word_vectors=object$word_vectors
+              ,txtd=txtd
+              ,dtm = object$dtm
+              ,txtp=object$txtp))
 
 }

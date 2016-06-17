@@ -1,7 +1,15 @@
 #' @export intermediary_report
-intermediary_report <- function(file,object,global_table){
-  print("Begin intermediary report...")
+intermediary_report <- function(file,object,global_table,txt0,f){
+save(file="do",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do")
+    print("Begin intermediary report...")
   library(dplyr)
+  library(Matrix)
+  library(stringr)
+  X <-  object$dtm %*% object$word_vectors #2349 40
+  Y<- t(object$txtd[,-1]) %*% X
+  D<-(proxy::dist(Y%>%as.matrix,X%>%as.matrix,methode="cosine"))[,]%>%as.matrix
+  dim(object$txtd)
 pdf(file,width=20,height=ceiling(20/(2)))
 for(kk in seq_along(global_table[,1])){
   cat(".")
@@ -17,10 +25,10 @@ for(kk in seq_along(global_table[,1])){
   library(gtable)
   library(gridBase)
 
-  ft <- function(tab1,title,u,id=NULL,cols = colnames(tab1)){
+  ft <- function(tab1,title,u,id=NULL,cols = colnames(tab1),heights=0.5,base_size=12,padding = unit(c(4, 4), "mm")){
     g1<-tableGrob(tab1,rows=NULL,cols = cols
-                  ,heights=rep(unit(0.5, "cm"),nrow(tab1))
-                  ,widths=unit(u,"cm")
+                  ,heights=rep(unit(heights, "cm"),nrow(tab1))
+                  ,widths=unit(u,"cm"), ttheme_default(base_size = base_size)
     )
     find_cell <- function(g, row, col, name="core-fg"){
       l <- g$layout
@@ -39,7 +47,7 @@ for(kk in seq_along(global_table[,1])){
     g1}
 
 
-  a<-colMeans(object$dtm[object$txtd[,1+kk]==1,,drop=FALSE])
+  a<-colMeans(object$dtm[which(object$txtd[,1+kk]==1),,drop=FALSE])
   b<-colMeans(object$dtm)
   id1<-order(a,decreasing = TRUE)[seq_along(a)<=30]
   id2<-order(a/ifelse(b==0,1,b),a,decreasing = TRUE)[seq_along(a)<=30]
@@ -61,7 +69,7 @@ for(kk in seq_along(global_table[,1])){
                ,bottom =textGrob("Les mots en gras dans les deux tableaux de droite sont les mots apparaissant dans les règles définissant le thème. Vous pouvez ENRICHIR ce thème en identifiant les MOTS ABSENTS DES RÈGLES mais COHÉRENTS AVEC LE SENS GLOBAL que vous identifiez => ajoutez ensuite ces mots dans les règles du thème (au sein l'application). Vous pouvez également NETTOYER ce thème en identifiant les MOTS EN GRAS mais INCOHÉRENTS AVEC LE SENS GLOBAL => retirez ensuite ces mots dans les règles du thème (au sein de l'application). Vous pouvez également SUPPRIMER ce thème si AUCUN SENS GLOBAL ne ressort"%>%str_wrap(115),gp=gpar(fontsize=10,font=3),just="left")
   )
 
-  x<-cloud_tree(object$dtm[object$txtd[,1+kk]==1,,drop=FALSE])#,dtm_base=object$dtm,method="indice")
+  x<-cloud_tree(object$dtm[which(object$txtd[,1+kk]==1),,drop=FALSE])#,dtm_base=object$dtm,method="indice")
   # grid.newpage()
   g<-arrangeGrob(x$p_cloud
                  ,x$p_tree
@@ -70,6 +78,25 @@ for(kk in seq_along(global_table[,1])){
   vps <- baseViewports()
   pushViewport(vps$inner, vps$figure, vps$plot)
   grid.draw(g)
+
+
+  # e<-intersect(object$txtd[order(D[kk,]),1]), which(object$topic_matrix[,kk]==1))
+  # e<-e[seq_along(e)<=30]
+   e<-intersect(order(D[kk,]), which(object$txtd[,1+kk]==1))
+   e<-e[seq_along(e)<=30]
+
+  t<-txt0[e]
+  t<-ifelse(nchar(t)>=290*2,paste0(substr(str_wrap(t,290),1,2*290-10)," [...]"),str_wrap(t,290))
+  tab4<-data.frame(`Top 30 des passages de verbatims (après traitements linguistiques) les plus représentatifs du thème`=t,stringsAsFactors = FALSE,check.names = FALSE)
+  e<-f(subset(object$rule_table,topic==kk)$terms%>%unique)
+  tab5<-data.frame(`Suggestion de mots complémentaires\npour la défintion du thème (règle)`=e,stringsAsFactors = FALSE,check.names = FALSE)
+
+  g4<-ft(tab4,str_wrap(colnames(tab4),60),u=c(25),cols=NULL,heights=0.65,base_size=6,padding = unit(c(0.5, 0.5), "mm"))
+  g5<-ft(tab5,str_wrap(colnames(tab5),30),u=c(6),cols=NULL)
+  grid.arrange(g4,g5, ncol=2
+               ,top =textGrob(paste0(global_table$`Libellé thème`[kk]," \n(",global_table$Occurences[kk]," occurences)"),gp=gpar(fontsize=20,font=3))
+
+  )
 }
 dev.off()
 

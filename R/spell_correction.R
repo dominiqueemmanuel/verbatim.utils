@@ -23,6 +23,7 @@ spell_correction <- function(txt, lang="en"
   dict <- paste0(lang,"_",if(lang=="en") "US" else toupper(lang))
   library(magrittr)
   library(stringr)
+  library(stringi)
   library(hunspell)
   library(fastmatch)
   # https://github.com/dominiqueemmanuel/hunspell
@@ -38,7 +39,7 @@ spell_correction <- function(txt, lang="en"
 
   ## On créer un séparateur artificiel de verbatim pour pouvoir traiter les verbatims en une fois (=> optimisation des temps de calculs)
   txt <- paste(txt,collapse=" _SEPARATEUR_DE_VERBATIM_ ")
-  txt <- gsub(" +"," ",txt)
+  txt <- stri_replace_all_regex(txt," +"," ")
   txt <- str_split(txt," ")[[1]]
 
 
