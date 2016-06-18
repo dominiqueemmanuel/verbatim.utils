@@ -1,4 +1,3 @@
-################ Info pour le développement
 ## Cette fonction prend un vecteur de chaine de caractères en entrée (i.e. un vecteur de verbatims)
 ## Cette fonction renvoie un vecteur de chaine de caractères de même longueur
 
@@ -15,6 +14,7 @@
 ## (car la fonction initial renvoyait un evecteur de longeur différentes du vecteur en entrée)
 ####################################################
 
+################ Info pour le développement
 
 #
 chunk2 <- function(x,n){
@@ -53,7 +53,7 @@ sub_lemmatisation <- function(txt, lang="fr"){
   out <- str_split(out," ")
   out <- out[lapply(out, length) == 4]
   #print(head(out))
-  print(lapply(out, length))
+  #print(lapply(out, length))
   out_lemme <- sapply(out,function(t)t[[2]])
   out_categ <- sapply(out,function(t)t[[3]])
   out_categ[out_lemme==tolower("MOT_SEPARATEUR_DE_VERBATIM")] <- tolower("MOT_SEPARATEUR_DE_VERBATIM")
@@ -102,12 +102,3 @@ lemmatisation  <- function(txt, lang="en", mc.cores = 4) {
 
 
 #lemmatisation(c("kaeaj lamps kae","aleakk amloer al lamaiosn adar,","alors un deusieme text pour un exemple complet"))
-
-
-
-
-
-
-
-
-
