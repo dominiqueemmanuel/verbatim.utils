@@ -39,7 +39,8 @@ sub_lemmatisation <- function(txt, lang="fr"){
   testtxt_out<-file(testtxt_out_name,encoding="UTF-8")
 
   ## Écriture de la commande
-  command <-   paste0("analyze -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
+  command <-   paste0("analyze  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
+
   ## Exécution de la commande
   res <- system(command)
 
@@ -48,11 +49,11 @@ sub_lemmatisation <- function(txt, lang="fr"){
 
   ## On lit le fichier en sortie
   out<-readLines(testtxt_out_name,encoding="UTF-8")
-  print(out)
   out <- out[-length(out)]
-
   out <- str_split(out," ")
-  print(out)
+  out <- out[lapply(out, length) == 4]
+  #print(head(out))
+  print(lapply(out, length))
   out_lemme <- sapply(out,function(t)t[[2]])
   out_categ <- sapply(out,function(t)t[[3]])
   out_categ[out_lemme==tolower("MOT_SEPARATEUR_DE_VERBATIM")] <- tolower("MOT_SEPARATEUR_DE_VERBATIM")
@@ -100,7 +101,7 @@ lemmatisation  <- function(txt, lang="en", mc.cores = 4) {
 }
 
 
-lemmatisation(c("kaeaj lamps kae","aleakk amloer al lamaiosn adar,","alors un deusieme text pour un exemple complet"))
+#lemmatisation(c("kaeaj lamps kae","aleakk amloer al lamaiosn adar,","alors un deusieme text pour un exemple complet"))
 
 
 
