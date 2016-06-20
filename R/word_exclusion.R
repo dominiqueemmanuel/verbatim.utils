@@ -31,53 +31,63 @@ word_exclusion <- function(txt
   library(stringi)
 
   if("email" %in% excluded_form){
-    txt <- rm_email(txt, replacement = if(replace_excluded_form) " _EMAIL_ " else "")
+    txt <- rm_email(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_EMAIL " else "")
   }
 
   if("link" %in% excluded_form){
-    txt <- rm_url(txt, replacement = if(replace_excluded_form) " _LIEN_ " else "")
-    txt <- rm_twitter_url(txt, replacement = if(replace_excluded_form) " _LIEN_ " else "")
+    txt <- rm_url(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
+    txt <- rm_twitter_url(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
   }
 
   if("hashtag" %in% excluded_form){
-    txt <- rm_hash(txt, replacement = if(replace_excluded_form) " _HASHTAG_ " else "")
+    txt <- rm_hash(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_HASHTAG " else "")
   }
 
   if("date" %in% excluded_form){
-    txt <- rm_date(txt, replacement = if(replace_excluded_form) " _DATE_ " else "")
+    txt <- rm_date(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_DATE " else "")
   }
 
   if("heure" %in% excluded_form){
-    txt <- gsub("\\d{1,2}(( ?)(\\:|h|H)( ?))(\\d{1,2}(?:[:.]\\d+)?)?", if(!replace_excluded_form)  "" else " _HEURE_ ", txt ,perl=TRUE)
-    # txt <- rm_time(txt, replacement = if(replace_excluded_form) " _HEURE_ " else "")
+    txt <- gsub("\\d{1,2}(( ?)(\\:|h|H)( ?))(\\d{1,2}(?:[:.]\\d+)?)?", if(!replace_excluded_form)  "" else " SPECIAL_FORM_HEURE ", txt ,perl=TRUE)
+    # txt <- rm_time(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_HEURE " else "")
   }
 
   if("pourcentage" %in% excluded_form){
-    txt <- rm_percent(txt, replacement = if(replace_excluded_form) " _POURCENTAGE_ " else "")
+    txt <- rm_percent(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_POURCENTAGE " else "")
   }
 
   if("monnaie" %in% excluded_form){
-    txt <- gsub("\\(?[0-9\\.\\,]+\\)?(( ?)(euros|euro|dollars|dollar|pounds|pound|\\€|\\$|£))"%>%force_encoding, if(!replace_excluded_form)  "" else " _MONNAIE_ ", txt ,perl=TRUE)
+    txt <- gsub("\\(?[0-9\\.\\,]+\\)?(( ?)(euros|euro|dollars|dollar|pounds|pound|\\€|\\$|£))"%>%force_encoding, if(!replace_excluded_form)  "" else " SPECIAL_FORM_MONNAIE ", txt ,perl=TRUE)
   }
 
   if("number" %in% excluded_form){
     txt <- gsub("([[:punct:]]|[[:space:]])([[:digit:]]+)([[:punct:]]|[[:space:]])","\\1 \\2 \\3", txt ,perl=TRUE)
-    txt <- rm_number(txt, replacement = if(replace_excluded_form) " _NOMBRE_ " else "")
+    txt <- rm_number(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_NOMBRE " else "")
   }
 
   if("emoticon" %in% excluded_form){
-    txt <- gsub("(^|[[:blank:]])((>?[:;=8XB]{1}[-~+o^]?[|\")(&gt;DO>{pP3/]+|</?3|XD+|D:<|x[-~+o^]?[|\")(&gt;DO>{pP3/]+))+([[:blank:]]|$)", if(replace_excluded_form) " _EMOTICON_ " else " ",txt,perl=TRUE)
-    # txt <- rm_emoticon(txt, replacement = if(replace_excluded_form) " _EMOTICON_ " else " ")
+    txt <- gsub("(^|[[:blank:]])((>?[:;=8XB]{1}[-~+o^]?[|\")(&gt;DO>{pP3/]+|</?3|XD+|D:<|x[-~+o^]?[|\")(&gt;DO>{pP3/]+))+([[:blank:]]|$)", if(replace_excluded_form) " SPECIAL_FORM_EMOTICON " else " ",txt,perl=TRUE)
+    # txt <- rm_emoticon(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_EMOTICON " else " ")
   }
 
+  # if("special_caracter" %in% excluded_form){
+  #   txt <- gsub("[^/\\.\\,\\;\\?\\;\\:\\!\\{\\}<>\\[\\]\\(\\)\\–\\'\\\"\\-\\_´’[:^punct:]]\\\\"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_CARACTÈRE_SPÉCIAL ", txt, perl=TRUE)
+  # }
+  #
+  #
+  # if("ponctuation" %in% excluded_form){
+  #   txt <- gsub("[\\.\\,\\;\\?\\;\\:\\!]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION ", txt, perl=TRUE)
+  #   txt <- gsub("[/\\\\\\{\\}<>\\[\\]\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION_SIMPLE ", txt, perl=TRUE)
+  # }
   if("special_caracter" %in% excluded_form){
-    txt <- gsub("[^\\,\\;\\?\\;\\:\\!\\(\\)\\–\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " _CARACTÈRE_SPÉCIAL_ ", txt, perl=TRUE)
+    txt <- gsub("[^\\,\\;\\?\\;\\:\\!\\<\\>\\[\\]\\{\\}\\(\\)\\–\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_CARACTÈRE_SPÉCIAL ", txt, perl=TRUE)
   }
 
   if("ponctuation" %in% excluded_form){
-    txt <- gsub("[\\,\\;\\?\\;\\:\\!\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " _PONCTUATION_ ", txt, perl=TRUE)
+      txt <- gsub("[\\,\\;\\?\\;\\:\\!\\<\\>\\[\\]\\{\\}\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION ", txt, perl=TRUE)
   }
 
+  # txt <-stri_replace_all_regex(txt,"\\\\|/"," ")
   if(min_letter>0){
     txt <- rm_nchar_words(txt, n=min_letter)
   }
@@ -91,7 +101,7 @@ word_exclusion <- function(txt
   library(gsubfn)
   id<-which(!is.na(txt))
   txt[id]<-gsubfn(p1
-                  ,function(x,...)if(grepl(p2,x)) x else " "
+                  ,function(x,...){if(grepl(p2,x)) x else stri_replace_all_fixed(x,"_"," ")}
                   ,x=txt[id]
                   ,backref = 1
                   ,perl=FALSE
@@ -114,8 +124,31 @@ return(txt)
 #        ,"une phrase avec des caractère spéciaux µ & ² # < et pas spéciaux 10$, 10 €, 10 dollars, 10 euros, 10 pound, 10%, 10£,10H10 10,50 €"
 #        ,"lundi 26/03/2015 entre 10:10 et 10H20"
 #        ,"haha ;) et :) et :("
-#        ,"une phrase avec un mot i de moins de une lettre !! et !"
+#        ,"une phrase aza_ | aa / bb et \ cc avec un (et une parenthèse) et <br>  et [jj] et {kkj} mot i de moins de une lettre !! et !"
 # )
-#
-# word_exclusion(txt,min_letter = 1)
+# word_exclusion(txt,min_letter=1)
 
+# txt <- force_encoding(movie_review$review)
+# ##  appliquer listing suppression/remplacement (avec ignore.case)
+# txt <- verbatim_exclusion(txt,min_word = 0, treatment = "empty")
+# txt <- idiomatic_correction(tolower(txt), lang = lang)
+# txt <- word_exclusion(txt,min_letter=1)
+# sw<-tm::stopwords(kind=lang)
+#
+# tab<-data.frame(
+#   # ID=as.integer(seq_along(sw)),
+#   `Mot/N-gram`=sw
+#   # ,`Action`="Suppression"
+#   ,`Mot/N-gram de remplacement`=""
+#   ,stringsAsFactors = FALSE
+#   ,check.names = FALSE)
+#
+# for(k in seq_along(tab[,1])){cat(".")
+#   txt <- stri_replace_all_regex(txt,paste0("\\b",str_trim(tab[k,"Mot/N-gram"]),"\\b")
+#                                 ,str_trim(tab[k,"Mot/N-gram de remplacement"])
+#                                 ,case_insensitive=TRUE)
+# }
+# #
+# txt<-gsub("_CARACTÈRE_SPÉCIAL_"," ",txt,fixed=TRUE)
+# txt<-gsub("[[:space:]]+"," ",txt)
+#

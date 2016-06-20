@@ -1,10 +1,10 @@
 Package: verbatim.utils
 Title: Useful functions for verbatims cleaning, visualization and topic modeling
-Version: 0.0.0.9012
+Version: 0.0.0.9016
 Authors@R: person("Dominique", "Emmanuel", email = "dominique_emmanuel@hotmail.com", role = c("aut", "cre"))
 Description: Useful functions for verbatims cleaning, visualization and topic modeling.
 Depends: data.table, Matrix, magrittr
-Imports: slam, data.table, stringi, stringdist, dplyr, Matrix, arules, Ruchardet, magrittr, stringr, hunspell, tokenizers, qdapRegex, text2vec
+Imports: slam, data.table, plyr, glmnet, RSpectra, stringi, stringdist, dplyr, Matrix, arules, Ruchardet, magrittr, stringr, hunspell, tokenizers, qdapRegex, text2vec
 License: AGPL-3
 LazyData: true
 RoxygenNote: 5.0.1.9000

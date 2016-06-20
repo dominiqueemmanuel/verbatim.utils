@@ -9,7 +9,7 @@
 # txt<-gsub("[[:space:]]+"," ",txt)
 
 #' @export topic_clustering
-topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCTUATION_",term_count_min = 5){
+topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCTUATION_",term_count_min = 5 , m=1.05, threshold = 0.9,word_vectors_size=50 , is_stem = FALSE){
   library(text2vec)
   library(dplyr)
   library(Matrix)
@@ -19,18 +19,22 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCT
   library(data.table)
   library(dplyr)
   library(stringi)
-   # save(file="do2",list=ls())
+  library(stringr)
+    # save(file="do2",list=ls())
    # stop("xx")
    # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")
-
+txt<-stri_replace_all_fixed(txt,"'"," ")
   txtd<-stri_split_regex(txt,sep_phrase,case_insensitive=TRUE)
   a<-lapply(seq_along(txtd),function(t)rep(t,length(txtd[[t]])))
   txtd<-data.frame(id=unlist(a),txt=str_trim(unlist(txtd)),stringsAsFactors  =FALSE)
 
+  if(is_stem){
   stem_tokenizer <- function(x) {
     word_tokenizer(x)%>% lapply(SnowballC::wordStem,language=lang)
   }
-
+  } else {
+    stem_tokenizer <- word_tokenizer
+  }
   it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
   vocab <- create_vocabulary(it,
                              ngram = c(ngram_min = 1L, ngram_max = 1L)
@@ -57,31 +61,41 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCT
   txtp<-txtd$txt
   # RcppParallel::setThreadOptions(numThreads = 8)
   set.seed(123)
-  fit <- glove(tcm = tcm, shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),max(2*nb_topic,10)),
+  word_vectors <- glove(tcm = tcm, shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
                x_max = 10, learning_rate = 0.05,
                num_iters = 150, grain_size = 1e5,
                max_cost = 50, convergence_threshold = 0.005)
-  word_vectors <- fit$word_vectors[[1]] + fit$word_vectors[[2]]
   rownames(word_vectors) <- force_encoding(rownames(tcm))
 
 
 
 
 
-  M2<-transform_tfidf(dtm)
-  e<-Matrix::rowSums(dtm>0)
-  e<-ifelse(e==0,1,e)
-  M2<-M2/e
-  M2<-M2%*%word_vectors
-  M2<-as.matrix(M2)
-  e<-Matrix::rowSums(M2^2)
-  id<-which(e>1e-6)
+  # M2<-transform_tfidf(dtm)
+  # e<-Matrix::rowSums(dtm>0)
+  # e<-ifelse(e==0,1,e)
+  # M2<-M2/e
+  # M2<-M2%*%word_vectors
+  # M2<-as.matrix(M2)
+  # e<-Matrix::rowSums(M2^2)
+  # id<-which(e>1e-6)
 
-  set.seed(123)
-  m<-skmeans(x=M2[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=1.05,control=list(verbose=FALSE,start = "S",maxiter=75))
-  topic_matrix<-as(m$membership>0.9,"Matrix")
+  # set.seed(123)
+  # m<-skmeans(x=M2[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=FALSE,start = "S",maxiter=75))
+  # X<-RSpectra::svds(M2[id,], k = ceiling(word_vectors_size*0.8), nv = 0, nu = ceiling(word_vectors_size*0.8))
+  # X$u%>%dim
+  # set.seed(123)
+  # m<-skmeans(x=cBind(M2[id,],X$u),k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
+set.seed(123)
+  m0<-LDA(n_topics = nb_topic,vocabulary = vocab)
+  a<-m0$fit_predict(dtm,n_iter = 300)
+  topic_matrix<-as(a>threshold,"Matrix")
+
+    # topic_matrix<-as(m$membership>threshold,"Matrix")
   colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
-  rule <- transform_topic_to_rule(dtm = dtm[id,],topic_matrix = topic_matrix,word_vectors = word_vectors)
+  save(file="do2",list=ls())
+  id<-seq(nrow(dtm))
+  rule <- transform_topic_to_rule(dtm = dtm,topic_matrix = topic_matrix,word_vectors = word_vectors)
 
 
   word_distance_function <- word_distance(word_vectors)
@@ -174,8 +188,9 @@ topic_clustering_divide <- function(object,id_topic,n=2){
 
 
 transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,word_vectors=NULL){
-  # save(file="do",list=ls())
+  # save(file="doz",list=ls())
   # stop('xxx')
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/doz")
   # if(is.null(colnames(topic_matrix)))
   colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
   nb_topic <- ncol(topic_matrix)
@@ -183,26 +198,39 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
    y<-t(topic_matrix)%*%(dtm)%*%word_vectors
    y<-y%>%as.matrix
  }
-  B<-as(cbind(topic_matrix,dtm>0),"nMatrix")
-  colnames(B)<-force_encoding(colnames(B))
-  base<-new("itemMatrix",
-            data = Matrix::t(B)
-            ,itemInfo=data.frame(labels=colnames(B),variables=colnames(B),levels=colnames(B))
-            ,itemsetInfo=data.frame()
-  )
-  # colnames(base)
-  set.seed(123)
-  confidence <- 0.4#min(5/nb_topic,1/4)
-  support = max(0.0002,5/nrow(dtm))
-  rules <- apriori(base,parameter = list(support = support, confidence = confidence,minlen=2,maxlen=4,smax=0.4,arem="info",minval=5e-3,aval=TRUE))
-  rules
-  # print(paste0("Length (1) = ",length(rules)))
-  rules2<-arules::subset(rules,lift > 2)
-  # print(paste0("Length (2) = ",length(rules2)))
-  rules2
-  rules2@lhs@itemInfo[,1]<-as.character(rules2@lhs@itemInfo[,1])%>%force_encoding
-  rules2@rhs@itemInfo[,1]<-as.character(rules2@rhs@itemInfo[,1])%>%force_encoding
+
   q<-lapply(seq(ncol(topic_matrix)),function(tt){cat(".")
+
+    e<-tryCatch({
+      library(glmnet)
+    set.seed(123)
+    m<-cv.glmnet(x=dtm,y=factor(topic_matrix[,tt]),family="binomial",alpha=0.01, lower.limits=0,pmax=30,maxit=500)
+    e<-coef(m,s="lambda.min")
+    e<-e[-1,]
+    e<-e[which(e>0)]
+    names(e[order(e,decreasing = TRUE)])
+    },error=function(e)colnames(dtm))
+    if(length(e)<=1)e<-colnames(dtm)
+
+    B<-as(cbind(topic_matrix,dtm[,e,drop=FALSE]>0),"nMatrix")
+    colnames(B)<-force_encoding(colnames(B))
+    base<-new("itemMatrix",
+              data = Matrix::t(B)
+              ,itemInfo=data.frame(labels=colnames(B),variables=colnames(B),levels=colnames(B))
+              ,itemsetInfo=data.frame()
+    )
+    # colnames(base)
+    set.seed(123)
+    confidence <- 0.15#min(5/nb_topic,1/4)
+    support = max(0.00005,5/nrow(dtm))
+    rules <- apriori(base,parameter = list(support = support, confidence = confidence,minlen=2,maxlen=4,smax=0.4,arem="info",minval=0,aval=TRUE))
+    rules
+    # print(paste0("Length (1) = ",length(rules)))
+    rules2<-arules::subset(rules,lift > 2)
+    # print(paste0("Length (2) = ",length(rules2)))
+    rules2
+    rules2@lhs@itemInfo[,1]<-as.character(rules2@lhs@itemInfo[,1])%>%force_encoding
+    rules2@rhs@itemInfo[,1]<-as.character(rules2@rhs@itemInfo[,1])%>%force_encoding
     s<-paste0("^",colnames(topic_matrix)[tt],"$")
     if(is.null(ignore_rule_table)){
       id<-which(
@@ -246,7 +274,7 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
     rules3<-rules2[id]
 
     id<-order(rules3@quality$support,decreasing=TRUE)
-    id<-id[seq_along(id)<=10]
+    id<-id[seq_along(id)<=15]
     rules4<-rules3[id]
     }
     # rules4<-rules3
@@ -332,22 +360,22 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
 #     print(" ")
 #     print(" ")
 }
-    rules4
+   list(r=rules4,B=B)
   })
 
-  id<-which(sapply(q,length)>0)
+  id<-which(sapply(q,function(t)length(t$r))>0)
   q<-q[id]
 
   qq<-sapply(q,function(qq){cat(".")
-    qq<-sapply(seq(ncol(qq@lhs@data)),function(t)qq@lhs@itemInfo[which(qq@lhs@data[,t]>0),1])
-    qq<-sapply(qq,function(t){Matrix::rowSums(B[,t,drop=FALSE]>0)==length(t) })
-    1*(Matrix::rowSums(matrix(qq,nrow=nrow(B)))>0)
+    qq0<-sapply(seq(ncol(qq$r@lhs@data)),function(t)qq$r@lhs@itemInfo[which(qq$r@lhs@data[,t]>0),1])
+    qq0<-sapply(qq0,function(t){Matrix::rowSums(qq$B[,t,drop=FALSE]>0)==length(t) })
+    1*(Matrix::rowSums(matrix(qq0,nrow=nrow(qq$B)))>0)
   })
   colnames(qq)<-colnames(topic_matrix)[which(sapply(q,length)>0)]
 
   r<-lapply(seq_along(q),function(i){
-    r<-lapply(seq(ncol(q[[i]]@lhs@data)),function(tt){
-      e<-colnames(B)[which(q[[i]]@lhs@data[,tt]>0)]
+    r<-lapply(seq(ncol(q[[i]]$r@lhs@data)),function(tt){
+      e<-colnames(q[[i]]$B)[which(q[[i]]$r@lhs@data[,tt]>0)]
       data.frame(topic=i,rule=tt,terms=e,stringsAsFactors = FALSE)
     })%>%do.call(rbind,.)
     r
