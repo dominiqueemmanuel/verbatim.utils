@@ -73,9 +73,9 @@ library(stringi)
 
   ## Écriture de la commande
   if(is.null(path)){
-    command <-   paste0("analyze  --nonumb --nodate --flush --ner --force retok  --afx --loc  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
+    command <-   paste0("analyze  --nonumb --nodate --flush --ner --force retok  --afx --noloc  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
   } else {
-    command <-   paste0(path ,  "  --nonumb --nodate --flush --ner --force retok  --afx --loc  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
+    command <-   paste0(path ,  "  --nonumb --nodate --flush --ner --force retok  --afx --noloc  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
   }
   ## Exécution de la commande
   if(.Platform[[1]]=="windows") {
@@ -94,20 +94,25 @@ library(stringi)
 
   out<-readLines(testtxt_out_name,encoding="UTF-8")
 
-    save(file="dom",list=ls())
+    # save(file="dom",list=ls())
   # out <- out[-length(out)]
   out <- str_split(out," ")
   out <- out[lapply(out, length) == 4]
+  out_in <- sapply(out,function(t)t[[1]])
   out_lemme <- sapply(out,function(t)t[[2]])
   out_categ <- sapply(out,function(t)t[[3]])
 
 
   if(!is.null(remove)){
     id<-which(grepl("_",out_lemme) | !(transform_pos(out_categ,lang=lang) %in% remove))
+    out_in<-out_in[id]
     out_lemme<-out_lemme[id]
     out_categ<-out_categ[id]
   }
-
+  a<-sapply(stri_match_all_regex(out_lemme,"_"),function(t)length(na.omit(t)))
+  b<-sapply(stri_match_all_regex(out_in,"_"),function(t)length(na.omit(t)))
+  # out_lemme<-ifelse(grepl("_",out_lemme) & !grepl("_",out_in), out_in,out_lemme)
+  out_lemme<-ifelse(a>b, out_in,out_lemme)
   out_categ[out_lemme==tolower("MOT_SEPARATEUR_DE_VERBATIM")] <- tolower("MOT_SEPARATEUR_DE_VERBATIM")
 
   out_lemme <- str_trim(str_split(paste(out_lemme,collapse = " "), tolower("MOT_SEPARATEUR_DE_VERBATIM"))[[1]])

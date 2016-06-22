@@ -9,7 +9,7 @@
 # txt<-gsub("[[:space:]]+"," ",txt)
 
 #' @export topic_clustering
-topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCTUATION_",term_count_min = 5 , m=1.05, threshold = 0.9,word_vectors_size=50 , is_stem = FALSE){
+topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponctuation_",term_count_min = 5 , m=1.05, threshold = 0.9,word_vectors_size=50 , is_stem = FALSE){
   library(text2vec)
   library(dplyr)
   library(Matrix)
@@ -23,11 +23,38 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_PONCT
     # save(file="do2",list=ls())
    # stop("xx")
    # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")
-txt<-stri_replace_all_fixed(txt,"'"," ")
+
   txtd<-stri_split_regex(txt,sep_phrase,case_insensitive=TRUE)
   a<-lapply(seq_along(txtd),function(t)rep(t,length(txtd[[t]])))
   txtd<-data.frame(id=unlist(a),txt=str_trim(unlist(txtd)),stringsAsFactors  =FALSE)
+  txtd$n<-as.numeric(sapply(str_split(txtd$txt," "),length))
 
+txtd<-txtd%>%group_by(id)%>%do((function(d){
+  while(nrow(d)>1 & min(d$n)<3){
+    t<-which.min(d$n)
+    if(t==nrow(d)){
+      d$n[t-1]<-d$n[t-1]+d$n[t]
+      d$txt[t-1]<-paste(d$txt[t-1],d$txt[t])
+      d<-d[-t,]
+    } else if(t==1) {
+      d$n[t+1]<-d$n[t]+d$n[t+1]
+      d$txt[t+1]<-paste(d$txt[t],d$txt[t+1])
+      d<-d[-t,]
+    } else {
+      a1<-d$n[t-1]+d$n[t]
+      a2<-paste(d$txt[t-1],d$txt[t])
+      a3<-d$n[t]+d$n[t+1]
+      a4<-paste(d$txt[t],d$txt[t+1])
+      d$n[t-1]<-a1
+      d$txt[t-1]<-a2
+      d$n[t+1]<-a3
+      d$txt[t+1]<-a4
+      d<-d[-t,]
+    }
+
+  }
+  d
+})(.))%>%as.data.frame
   if(is_stem){
   stem_tokenizer <- function(x) {
     word_tokenizer(x)%>% lapply(SnowballC::wordStem,language=lang)
@@ -39,9 +66,9 @@ txt<-stri_replace_all_fixed(txt,"'"," ")
   vocab <- create_vocabulary(it,
                              ngram = c(ngram_min = 1L, ngram_max = 1L)
                              # ,stopwords = tm::stopwords(lang)
-  ) %>% prune_vocabulary(term_count_min = term_count_min,term_count_max = 0.4*length(txt),max_number_of_terms=8000)
+  ) %>% prune_vocabulary(term_count_min = term_count_min,doc_proportion_max = 0.4,max_number_of_terms=5000)
   vocab$vocab$terms<-force_encoding(vocab$vocab$terms)
-
+  vocab$vocab<-subset(vocab$vocab,doc_counts>=term_count_min)
 
   q<-str_split(txtd$txt," ")
   a<-lapply(seq_along(q),function(t)rep(t,length(q[[t]])))
@@ -60,25 +87,32 @@ txt<-stri_replace_all_fixed(txt,"'"," ")
   colnames(dtm) <- force_encoding(colnames(dtm))
   txtp<-txtd$txt
   # RcppParallel::setThreadOptions(numThreads = 8)
+  # set.seed(123)
+  # word_vectors <- glove(tcm = tcm, shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
+  #              x_max = 10, learning_rate = 0.05,
+  #              num_iters = 150, grain_size = 1e5,
+  #              max_cost = 50, convergence_threshold = 0.005)
+  #
+
   set.seed(123)
-  word_vectors <- glove(tcm = tcm, shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
-               x_max = 10, learning_rate = 0.05,
-               num_iters = 150, grain_size = 1e5,
-               max_cost = 50, convergence_threshold = 0.005)
+  glove_model <- GloVe(vocabulary = vocab,shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
+                        x_max = 10)
+  # fitted_model = fit(glove_model, tcm, n_iter = 150, convergence_tol = 0.05, verbose = TRUE)
+  word_vectors <- glove_model$fit_predict(tcm, n_iter = 150, convergence_tol = 0.005, verbose = TRUE)
+  # get word vectors
+
   rownames(word_vectors) <- force_encoding(rownames(tcm))
 
 
 
 
-
-  # M2<-transform_tfidf(dtm)
-  # e<-Matrix::rowSums(dtm>0)
-  # e<-ifelse(e==0,1,e)
-  # M2<-M2/e
-  # M2<-M2%*%word_vectors
-  # M2<-as.matrix(M2)
-  # e<-Matrix::rowSums(M2^2)
-  # id<-which(e>1e-6)
+#
+#   M2<-transform_tfidf(dtm)
+#   e<-Matrix::rowSums(dtm>0)
+#   e<-ifelse(e==0,1,e)
+#   M2<-M2/e
+#   M2<-M2%*%word_vectors
+#   M2<-as.matrix(M2)
 
   # set.seed(123)
   # m<-skmeans(x=M2[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=FALSE,start = "S",maxiter=75))
@@ -86,19 +120,53 @@ txt<-stri_replace_all_fixed(txt,"'"," ")
   # X$u%>%dim
   # set.seed(123)
   # m<-skmeans(x=cBind(M2[id,],X$u),k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
-set.seed(123)
+  # d<-qlcMatrix::cosSparse(t(word_vectors))
+  # library(igraph)
+  # g<-graph_from_adjacency_matrix(d>=cos(pi/4.5),mode="undirected")
+  # c<-cluster_louvain(g)
+  # c<-communities(c)
+  # e<-c[which(sapply(c,length)>1)]
+  #
+  # dtm2<-dtm
+  # e2<-unlist(sapply(e,function(t)t[-1]))
+  # dtm2<-dtm2[,which(!(colnames(dtm2) %in% e2)),drop=FALSE]
+  #
+  # for(k in seq_along(e)){cat(".")
+  #   dtm2[,e[[1]][1]] <- 1*(rowSums(dtm[,e[[1]],drop=FALSE])>0)
+  # }
+
+  set.seed(123)
   m0<-LDA(n_topics = nb_topic,vocabulary = vocab)
-  a<-m0$fit_predict(dtm,n_iter = 300)
+  a<-m0$fit_predict(dtm,n_iter = 250)
+
+
+
+  # set.seed(123)
+  # m<-skmeans(x=M3[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
+  # topic_matrix<-as(m$membership>threshold,"Matrix")
   topic_matrix<-as(a>threshold,"Matrix")
+
+
+  #  set.seed(123)
+  #  m<-skmeans(x=b,k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
+  #  topic_matrix<-as(m$membership>threshold,"Matrix")
 
     # topic_matrix<-as(m$membership>threshold,"Matrix")
   colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
   save(file="do2",list=ls())
-  id<-seq(nrow(dtm))
+   id<-seq(nrow(dtm))
   rule <- transform_topic_to_rule(dtm = dtm,topic_matrix = topic_matrix,word_vectors = word_vectors)
 
-
   word_distance_function <- word_distance(word_vectors)
+
+  # e<-unique(rule$rule$terms)
+  # e2<-word_distance_function(e,n = length(e))
+  # e<-unique(c(e,e2))
+  # length(e)
+  # m0<-LDA(n_topics = nb_topic,vocabulary = vocab)
+  # a<-m0$fit_predict(dtm[,e],n_iter = 200)
+  # topic_matrix<-as(a>threshold,"Matrix")
+  # rule <- transform_topic_to_rule(dtm = dtm,topic_matrix = topic_matrix,word_vectors = word_vectors)
 
   # new_topic_matrix <-
   # id,]%>%select(id)
@@ -187,7 +255,7 @@ topic_clustering_divide <- function(object,id_topic,n=2){
 }
 
 
-transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,word_vectors=NULL){
+transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,word_vectors=NULL,seuils=c(10,10,10,10)){
   # save(file="doz",list=ls())
   # stop('xxx')
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/doz")
@@ -201,17 +269,18 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
 
   q<-lapply(seq(ncol(topic_matrix)),function(tt){cat(".")
 
-    e<-tryCatch({
-      library(glmnet)
-    set.seed(123)
-    m<-cv.glmnet(x=dtm,y=factor(topic_matrix[,tt]),family="binomial",alpha=0.01, lower.limits=0,pmax=30,maxit=500)
-    e<-coef(m,s="lambda.min")
-    e<-e[-1,]
-    e<-e[which(e>0)]
-    names(e[order(e,decreasing = TRUE)])
-    },error=function(e)colnames(dtm))
-    if(length(e)<=1)e<-colnames(dtm)
-
+    # e<-tryCatch({
+    #   library(glmnet)
+    # set.seed(123)
+    # m<-cv.glmnet(x=dtm,y=factor(topic_matrix[,tt]),family="binomial",alpha=0.95, lower.limits=0,pmax=40,maxit=150)
+    # e<-coef(m,s="lambda.min")
+    # e<-e[-1,]
+    # e<-e[which(e>0)]
+    # names(e[order(e,decreasing = TRUE)])
+    # },error=function(e)colnames(dtm))
+    # if(length(e)<=1)e<-colnames(dtm)
+    e<-colnames(dtm)[which(colSums(dtm>0)>=3  &  colMeans(dtm[topic_matrix[,tt]>0,]>0)/colMeans(dtm>0)>=2)]
+    length(e)
     B<-as(cbind(topic_matrix,dtm[,e,drop=FALSE]>0),"nMatrix")
     colnames(B)<-force_encoding(colnames(B))
     base<-new("itemMatrix",
@@ -221,8 +290,8 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
     )
     # colnames(base)
     set.seed(123)
-    confidence <- 0.15#min(5/nb_topic,1/4)
-    support = max(0.00005,5/nrow(dtm))
+    confidence <- 0.1#min(5/nb_topic,1/4)
+    support = max(0.00001,3/nrow(dtm))
     rules <- apriori(base,parameter = list(support = support, confidence = confidence,minlen=2,maxlen=4,smax=0.4,arem="info",minval=0,aval=TRUE))
     rules
     # print(paste0("Length (1) = ",length(rules)))
@@ -258,24 +327,36 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
       })
 
       id<-id[order(d)]
-      id<-id[seq_along(id)<=40]
+      id<-id[seq_along(id)<=seuils[1]]
       rules3<-rules2[id]
 
       id<-order(rules3@quality$info,decreasing=TRUE)
-      id<-id[seq_along(id)<=20]
+      id<-id[seq_along(id)<=seuils[2]]
       rules4<-rules3[id]
 
-      id<-order(rules4@quality$support,decreasing=TRUE)
-      id<-id[seq_along(id)<=10]
+      id<-order(rules4@quality$confidence,decreasing=TRUE)
+      id<-id[seq_along(id)<=seuils[3]]
       rules4<-rules4[id]
+
+      id<-order(rules4@quality$support,decreasing=TRUE)
+      id<-id[seq_along(id)<=seuils[4]]
+      rules4<-rules4[id]
+
+
+
     } else {
     id<-id[order(rules2@quality[id,]$info,decreasing=TRUE)]
-    id<-id[seq_along(id)<=30]
-    rules3<-rules2[id]
+    id<-id[seq_along(id)<=seuils[2]]
+    rules4<-rules2[id]
 
-    id<-order(rules3@quality$support,decreasing=TRUE)
-    id<-id[seq_along(id)<=15]
-    rules4<-rules3[id]
+    id<-order(rules4@quality$confidence,decreasing=TRUE)
+    id<-id[seq_along(id)<=seuils[3]]
+    rules4<-rules4[id]
+
+    id<-order(rules4@quality$support,decreasing=TRUE)
+    id<-id[seq_along(id)<=seuils[4]]
+    rules4<-rules4[id]
+
     }
     # rules4<-rules3
     # print(paste0("Length (3 -",tt,") = ",length(rules4)))
@@ -366,11 +447,19 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
   id<-which(sapply(q,function(t)length(t$r))>0)
   q<-q[id]
 
-  qq<-sapply(q,function(qq){cat(".")
+  qq<-lapply(seq_along(q),function(ee){cat(".")
+    qq<-q[[ee]]
     qq0<-sapply(seq(ncol(qq$r@lhs@data)),function(t)qq$r@lhs@itemInfo[which(qq$r@lhs@data[,t]>0),1])
     qq0<-sapply(qq0,function(t){Matrix::rowSums(qq$B[,t,drop=FALSE]>0)==length(t) })
-    1*(Matrix::rowSums(matrix(qq0,nrow=nrow(qq$B)))>0)
+    # a<-1*(Matrix::rowSums(matrix(qq0,nrow=nrow(qq$B)))>0)
+    b<-1*t(apply(matrix(qq0,nrow=nrow(qq$B)),1,cumsum)>0)
+    if(nrow(b)==1)b<-t(b)
+    a<-which.max(sapply(seq(ncol(b)),function(t)mean(topic_matrix[b[,t]==1,ee])))
+    # a<-max(a,min(ncol(b),3))
+    list(v=b[,a],s=a)
   })
+s<-sapply(qq,function(t)t[["s"]])
+qq<-sapply(qq,function(t)t[["v"]])
   colnames(qq)<-colnames(topic_matrix)[which(sapply(q,length)>0)]
 
   r<-lapply(seq_along(q),function(i){
@@ -378,7 +467,7 @@ transform_topic_to_rule <- function(dtm, topic_matrix,ignore_rule_table=NULL,wor
       e<-colnames(q[[i]]$B)[which(q[[i]]$r@lhs@data[,tt]>0)]
       data.frame(topic=i,rule=tt,terms=e,stringsAsFactors = FALSE)
     })%>%do.call(rbind,.)
-    r
+    subset(r,rule<=s[i])
   })%>%do.call(rbind,.)
   return(list(rule=r,new_topic_matrix=qq,q=q))
 }

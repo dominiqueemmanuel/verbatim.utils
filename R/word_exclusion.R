@@ -88,25 +88,15 @@ word_exclusion <- function(txt
   }
 
   # txt <-stri_replace_all_regex(txt,"\\\\|/"," ")
-  if(min_letter>0){
-    txt <- rm_nchar_words(txt, n=min_letter)
-  }
+    remove_small_word(txt,min_letter)
   txt <- stri_replace_all_regex(txt,"[[:space:]]+"," ")
 
 
 
   ## Les _ qui ne sont pas d'une forme créé dans cette fonction sont supprimé
-  p1<-"\\b(\\_?[[:alnum:]]{0,})\\_([[:alnum:]]{0,}\\_?)\\b"
-  p2<-"(\\b((\\_)(([[:upper:]]|\\_){1,})(\\_))\\b)"
-  library(gsubfn)
   id<-which(!is.na(txt))
-  txt[id]<-gsubfn(p1
-                  ,function(x,...){if(grepl(p2,x)) x else stri_replace_all_fixed(x,"_"," ")}
-                  ,x=txt[id]
-                  ,backref = 1
-                  ,perl=FALSE
-                  ,engine="R"
-  )
+  print(txt)
+  txt[id]<-remove_underscore(txt[id])
 
 
 
@@ -152,3 +142,33 @@ return(txt)
 # txt<-gsub("_CARACTÈRE_SPÉCIAL_"," ",txt,fixed=TRUE)
 # txt<-gsub("[[:space:]]+"," ",txt)
 #
+
+
+
+#' @export remove_underscore
+remove_underscore <- function(txt,f = function(x)x){
+  p1<-"\\b(\\_?([[:alnum:]]|\\_){0,})\\_(([[:alnum:]]|\\_){0,}\\_?)\\b"
+  p2<-"^special_form_([[:alnum:]]|\\_)"
+  library(gsubfn)
+
+  gsubfn(p1
+                  ,function(x,...){if(grepl(p2,x,ignore.case=TRUE)) f(x) else stri_replace_all_fixed(x,"_"," ")}
+                  ,x=txt
+                  ,backref = 1
+                  ,perl=FALSE
+                  ,engine="R"
+  )
+
+}
+
+#' @export remove_small_word
+remove_small_word <- function(txt,min_letter=0){
+  library(magrittr)
+  library(stringr)
+  library(qdapRegex)
+  library(stringi)
+  if(min_letter>0){
+  txt <- rm_nchar_words(txt, n=min_letter)
+  }
+  return(txt)
+}
