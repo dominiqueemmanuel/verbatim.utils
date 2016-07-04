@@ -1,5 +1,6 @@
 #' @export idiomatic_correction
-idiomatic_correction <- function(txt, lang="en"){
+idiomatic_correction <- make_parallel_func(idiomatic_correction0)
+idiomatic_correction0 <- function(txt, lang="en"){
   library(stringi)
   #On corrige les appostrphes
   txt <- stri_replace_all_regex(txt,"'|´|’"%>%force_encoding,"'")

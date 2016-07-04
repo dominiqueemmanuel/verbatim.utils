@@ -73,9 +73,9 @@ library(stringi)
 
   ## Écriture de la commande
   if(is.null(path)){
-    command <-   paste0("analyze  --nonumb --nodate --flush --ner --force retok  --afx --noloc  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
+    command <-   paste0("analyze  --nonumb --nodate --flush --ner --force retok --afx  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
   } else {
-    command <-   paste0(path ,  "  --nonumb --nodate --flush --ner --force retok  --afx --noloc  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
+    command <-   paste0(path ,  "  --nonumb --nodate --flush --ner --force retok  --afx  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
   }
   ## Exécution de la commande
   if(.Platform[[1]]=="windows") {
@@ -88,7 +88,11 @@ library(stringi)
   close(testtxt_out)
 
   ## s'il y a eu un problème on renvoi NULL
-  if(res!=0)return(NULL)
+  if(res!=0){
+    print("ERREUR LEMMATISATION")
+    txt<-str_split(txt,"MOT_SEPARATEUR_DE_VERBATIM")[[1]]%>%str_trim
+    return(list(txt_lemme=txt,txt_categ=NULL))
+  }
 
   ## On lit le fichier en sortie
 

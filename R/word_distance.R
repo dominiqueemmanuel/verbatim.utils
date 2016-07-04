@@ -1,5 +1,5 @@
 #' @export word_distance
-word_distance <- function(word_vectors) {
+word_distance <- function(word_vectors,mc.cores=4) {
   library(Matrix)
 library(data.table)
 library(stringdist)
@@ -15,12 +15,12 @@ out[, count := 1:.N, by = terms1]
 out <- subset(out , count <= 20)
 out[, count := NULL]
 
-d0<-stringdistmatrix(terms,method="osa")%>%as.matrix
+d0<-stringdistmatrix(terms,method="osa",nthread=mc.cores)%>%as.matrix
 # d000<-stringdistmatrix(terms,method="lcs")%>%as.matrix
 # d00<-nchar(terms)
 # d00<-1-1*(d000==abs(outer(d00,d00,FUN = "-")))
 # d0<-d0*d00+0.01*(1-d00)
-d000<-stringdistmatrix(terms,method="qgram")%>%as.matrix
+d000<-stringdistmatrix(terms,method="qgram",nthread=mc.cores)%>%as.matrix
  d0<-d0 + d000/100
 diag(d0)<-0
 

@@ -3,6 +3,7 @@
 # intermediary_report_simple_analysis(file="test.pdf",dtm=object$dtm,table_ts=object$txtd[,2:3])
 #' @export intermediary_report_simple_analysis
 intermediary_report_simple_analysis <- function(file,dtm,table_ts = NULL){
+    dtm<-1*(dtm>0)
   print(file)
   library(stringr)
   library(grid)
@@ -35,9 +36,13 @@ print("... End intermediary report")
 }
 
 
-intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title) {
+intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title,only_result=FALSE,...) {
   cat(".")
-
+  library(stringr)
+  library(grid)
+  library(gridExtra)
+  library(gtable)
+  library(gridBase)
   ft <- function(tab1,title,u,id=NULL,cols = colnames(tab1)){
     g1<-tableGrob(tab1,rows=NULL,cols = cols
                   ,heights=rep(unit(0.5, "cm"),nrow(tab1))
@@ -58,7 +63,7 @@ intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title) 
                           pos = 0)
     g1 <- gtable_add_grob(g1, title, 1, 1, 1, ncol(tab1))
     g1}
-
+tab2<-tab3<-NULL
 
   a<-colMeans(dtm)
   id1<-order(a,decreasing = TRUE)[seq_along(a)<=30]
@@ -83,29 +88,31 @@ intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title) 
       mutate(`Fréquence\n globale`=paste0(round(`Fréquence\n globale`*100,2),"%"))
     tab2<-b[id1,]
     tab3<-b[id2,]
-
+if(!only_result){
     g2<-ft(tab2,str_wrap("Top 30 en FREQUENCE de mots les plus représentés",30),c(5,3,3,3))
     g3<-ft(tab3,str_wrap("Top 30 en INDICE de mots les plus représentés",30),c(5,3,3,3))
     # grid.newpage()
     grid.arrange(g2,g3, ncol=2
                  ,top =textGrob(paste0(title," \n(",nrow(dtm)," occurences)"),gp=gpar(fontsize=20,font=3))
     )
+}
   } else {
     b<-data.frame(`Mot` = colnames(dtm),`Fréquence`=paste0(round(a*100,2),"%")
                   ,stringsAsFactors = FALSE,check.names=FALSE)
     tab2<-b[id1,]
-
+    if(!only_result){
     g2<-ft(tab2,str_wrap("Top 30 en FREQUENCE de mots les plus représentés",30),c(5,3))
     # grid.newpage()
     grid.arrange(g2, ncol=1
                  ,top =textGrob(paste0(title," \n(",nrow(dtm)," occurences)"),gp=gpar(fontsize=20,font=3))
     )
+    }
 
   }
 
 
-    x<-cloud_tree(dtm)#,dtm_base=object$dtm,method="indice")
-  # grid.newpage()
+    x<-cloud_tree(dtm,...)#,dtm_base=object$dtm,method="indice")
+    if(!only_result){ # grid.newpage()
   g<-arrangeGrob(x$p_cloud
                  ,x$p_tree
                  , ncol=2,top =textGrob(paste0(title," \n(",nrow(dtm)," occurences)"),gp=gpar(fontsize=20,font=3))
@@ -113,7 +120,10 @@ intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title) 
   vps <- baseViewports()
   pushViewport(vps$inner, vps$figure, vps$plot)
   grid.draw(g)
-
+    }
+    if(only_result){
+      return(list(tab2=tab2,tab3=tab3,x=x))
+    }
 
 
 

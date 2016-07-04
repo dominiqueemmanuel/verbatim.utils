@@ -16,13 +16,25 @@
 
 
 #' @export word_exclusion
-word_exclusion <- function(txt
-                           ,excluded_form= c("email","link","hashtag","date","heure","pourcentage","monnaie","number","emoticon","special_caracter","ponctuation")
+word_exclusion <- make_parallel_func(word_exclusion0)
+
+
+# word_exclusion <- function(txt,...,mc.cores = 4){
+#   if(.Platform[[1]]=="windows") {
+#     mc.cores <- 1
+#   }
+#   txt <- chunk2(txt, mc.cores)
+#   txt <- unlist(mclapply(txt, function(x) word_exclusion0(x,...), mc.cores = mc.cores))
+#   return(txt)
+#
+# }
+word_exclusion0 <- function(txt
+                           ,excluded_form= c("email","link",'@user',"hashtag","date","heure","pourcentage","monnaie","number","emoticon","special_caracter","ponctuation")
                            ,replace_excluded_form = TRUE
                            ,excluded_word= NULL
                            ,min_letter = 0)
 {
-  excluded_form <- sapply(tolower(excluded_form),function(x)match.arg(x,c("email","link","hashtag","date","heure","pourcentage","monnaie","number","emoticon","special_caracter","ponctuation")))
+  excluded_form <- sapply(tolower(excluded_form),function(x)match.arg(x,c("email","link","@user","hashtag","date","heure","pourcentage","monnaie","number","emoticon","special_caracter","ponctuation")))
   nom <- names(txt)
   txt <- force_encoding(txt)
   library(magrittr)
@@ -33,10 +45,20 @@ word_exclusion <- function(txt
   if("email" %in% excluded_form){
     txt <- rm_email(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_EMAIL " else "")
   }
+  if("@user" %in% excluded_form){
+    p<-"(?<![@\\w])(@)((([[:alnum:]]|\\.|/|-|_)+)\\b)"
+    txt <- stri_replace_all_regex(txt,p,if(replace_excluded_form) " SPECIAL_FORM_USER " else "")
 
+  }
   if("link" %in% excluded_form){
-    txt <- rm_url(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
-    txt <- rm_twitter_url(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
+    # txt <- rm_url(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
+    # txt <- rm_twitter_url(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
+    # p<-"(?:(\\b[a-z\\d.-]+://)?[^<>\\s]+|\\b(?:(?:(?:[^\\s!@#$%^&*()_=+[\\\\]{}\\|;:'\",.<>/?]+)\\.)+(?:ac|ad|aero|ae|af|ag|ai|al|am|an|ao|aq|arpa|ar|asia|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|biz|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|cat|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|coop|com|co|cr|cu|cv|cx|cy|cz|de|dj|dk|dm|do|dz|ec|edu|ee|eg|er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gov|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|id|ie|il|im|info|int|in|io|iq|ir|is|it|je|jm|jobs|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mil|mk|ml|mm|mn|mobi|mo|mp|mq|mr|ms|mt|museum|mu|mv|mw|mx|my|mz|name|na|nc|net|ne|nf|ng|ni|nl|no|np|nr|nu|nz|om|org|pa|pe|pf|pg|ph|pk|pl|pm|pn|pro|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|sk|sl|sm|sn|so|sr|st|su|sv|sy|sz|tc|td|tel|tf|tg|th|tj|tk|tl|tm|tn|to|tp|travel|tr|tt|tv|tw|tz|ua|ug|uk|um|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|xn--0zwm56d|xn--11b5bs3a9aj6g|xn--80akhbyknj4f|xn--9t4b11yi5a|xn--deba0ad|xn--g6w251d|xn--hgbk6aj7f53bba|xn--hlcj6aya9esc7a|xn--jxalpdlp|xn--kgbechtv|xn--zckzah|ye|yt|yu|za|zm|zw)|(?:(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]))(?:[;/][^#?<>\\s]*)?(?:\\?[^#<>\\s]*)?(?:#[^<>\\s]*)?(?!\\w))"
+    p1<-"(https?://t\\.co[^ ]*)|(t\\.co[^ ]*)|(http[^ ]*)|(ftp[^ ]*)|(www\\.[^ ]*)|(((https?|ftps?)://)|(www\\.))(-\\.)?([^\\s/?\\.#-]+\\.?)+(/[^\\s]*)?|(https?|ftps?)://(-\\.)?([^\\s/?\\.#-]+\\.?)+(/[^\\s]*)?"
+    p2<-"(((([[:alnum:]]|\\.|/|-|_){1,}\\.[a-zA-Z]{2,3}(/([[:alnum:]]|\\.|/-|_){1,})?))|(/(([[:alnum:]]|\\.|/-|_){1,}\\.[a-zA-Z]{2,3}(/([[:alnum:]]|\\.|/-|_){1,})?)))"
+    p<-paste0(p1,"|",p2)
+     txt <- stri_replace_all_regex(txt,p,if(replace_excluded_form) " SPECIAL_FORM_LIEN " else "")
+
   }
 
   if("hashtag" %in% excluded_form){
@@ -80,22 +102,22 @@ word_exclusion <- function(txt
   #   txt <- gsub("[/\\\\\\{\\}<>\\[\\]\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION_SIMPLE ", txt, perl=TRUE)
   # }
   if("special_caracter" %in% excluded_form){
-    txt <- gsub("[^\\,\\;\\?\\;\\:\\!\\<\\>\\[\\]\\{\\}\\(\\)\\–\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_CARACTÈRE_SPÉCIAL ", txt, perl=TRUE)
+    txt <- gsub("[^\\.\\,\\;\\?\\;\\:\\!\\<\\>\\[\\]\\{\\}\\(\\)\\–\\'\\\"\\-\\_´’[:^punct:]]"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_CARACTÈRE_SPÉCIAL ", txt, perl=TRUE)
   }
 
   if("ponctuation" %in% excluded_form){
-      txt <- gsub("[\\,\\;\\?\\;\\:\\!\\<\\>\\[\\]\\{\\}\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION ", txt, perl=TRUE)
+      txt <- gsub("[\\?\\:\\!\\.]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION_PHRASE ", txt, perl=TRUE)
+      txt <- gsub("[\\,\\;\\;\\<\\>\\[\\]\\{\\}\\(\\)\\–]+"%>%force_encoding,if(!replace_excluded_form)  "" else " SPECIAL_FORM_PONCTUATION_SIMPLE ", txt, perl=TRUE)
   }
 
   # txt <-stri_replace_all_regex(txt,"\\\\|/"," ")
-    remove_small_word(txt,min_letter)
+    txt <- remove_small_word(txt,min_letter)
   txt <- stri_replace_all_regex(txt,"[[:space:]]+"," ")
 
 
 
   ## Les _ qui ne sont pas d'une forme créé dans cette fonction sont supprimé
   id<-which(!is.na(txt))
-  print(txt)
   txt[id]<-remove_underscore(txt[id])
 
 
@@ -168,7 +190,8 @@ remove_small_word <- function(txt,min_letter=0){
   library(qdapRegex)
   library(stringi)
   if(min_letter>0){
-  txt <- rm_nchar_words(txt, n=min_letter)
+    p<-"(?<![\\w'])(?:'?\\w'?){1}(?![\\w'])"
+    txt <- stri_replace_all_regex(txt,p,"")
   }
   return(txt)
 }

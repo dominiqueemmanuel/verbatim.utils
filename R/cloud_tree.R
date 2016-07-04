@@ -1,5 +1,5 @@
 #' @export cloud_tree
-cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="steelblue",dtm_base=NULL,method="indice"){
+cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="steelblue",dtm_base=NULL,method="indice",min_tree=3,max_tree=13,min_cloud=3,max_cloud=22){
   library(igraph)
   library(shinythemes)
   library(ggplot2)
@@ -80,29 +80,29 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
     if(cg0$no>1){
       if(min(cg0$csize)==1){
         cg<-which(cg0$membership %in% which(cg0$csize==1))
-        gg<-add.vertices(gg,1)
+        gg<-igraph::add.vertices(gg,1)
         for(kk in cg){
 
-          gg<-add.edges(gg, edges=c(cg[1],kk),attr=list(weight=0))
+          gg<-igraph::add.edges(gg, edges=c(cg[1],kk),attr=list(weight=0))
         }
         cg1<-which(cg0$membership==which(cg0$csize==max(cg0$csize)))
-        cg1<-cg1[which.max(degree(g)[cg1])]
-        gg<-add.edges(gg,c(vcount(gg),cg1),attr=list(weight=1))
-        gg<-add.edges(gg,c(vcount(gg),cg[1]),attr=list(weight=1))
+        cg1<-cg1[which.max(igraph::degree(g)[cg1])]
+        gg<-igraph::add.edges(gg,c(vcount(gg),cg1),attr=list(weight=1))
+        gg<-igraph::add.edges(gg,c(vcount(gg),cg[1]),attr=list(weight=1))
       }
 
       if(sum(cg0$csize>1 & cg0$csize<max(cg0$csize))>1){
         icg<-which(cg0$csize<max(cg0$csize) & cg0$csize>1 )
         for(j in icg){
-          gg<-add.vertices(gg,1)
+          gg<-igraph::add.vertices(gg,1)
           cg<-which(cg0$membership==j)
           for(kk in cg){
-            gg<-add.edges(gg, edges=c(cg[1],kk),attr=list(weight=0))
+            gg<-igraph::add.edges(gg, edges=c(cg[1],kk),attr=list(weight=0))
           }
           cg1<-which(cg0$membership==which(cg0$csize==max(cg0$csize)))
-          cg1<-cg1[which.max(degree(g)[cg1])]
-          gg<-add.edges(gg,c(vcount(gg),cg1),attr=list(weight=1))
-          gg<-add.edges(gg,c(vcount(gg),cg[1]),attr=list(weight=1))
+          cg1<-cg1[which.max(igraph::degree(g)[cg1])]
+          gg<-igraph::add.edges(gg,c(vcount(gg),cg1),attr=list(weight=1))
+          gg<-igraph::add.edges(gg,c(vcount(gg),cg[1]),attr=list(weight=1))
         }
       }
     }
@@ -161,7 +161,7 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
                 panel.grid.minor=element_blank(),plot.background=element_blank())
     la2<-data.frame(x=la[,1],y=la[,2],name= rownames(d), cex = V(g)$imp/3, color = colC,stringsAsFactors = FALSE)
     p<-p+geom_text_repel(data=la2,aes(x=x,y=y, label = name,size=10*cex),color=la2$color,max.iter=500, segment.color= add.alpha("grey0",0.5))
-    p<-p+scale_size(range=c(3,13))
+    p<-p+scale_size(range=c(min_tree,max_tree))
     .e <- new.env()
     .e$a<-a
     .e$la2<-la2
@@ -194,7 +194,7 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
                   axis.title.y=element_blank(),legend.position="none",
                   panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
                   panel.grid.minor=element_blank(),plot.background=element_blank())
-    p2<-p2+scale_size(range=c(3,22))
+    p2<-p2+scale_size(range=c(min_cloud,max_cloud))
     p2
     .e <- new.env()
     .e$la3<-la3

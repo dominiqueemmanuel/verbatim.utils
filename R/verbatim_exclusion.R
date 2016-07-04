@@ -18,7 +18,9 @@
 ####################################################
 
 #' @export verbatim_exclusion
-verbatim_exclusion <- function(txt, min_word = 0, treatment = "empty") {
+verbatim_exclusion <- make_parallel_func(verbatim_exclusion0)
+
+verbatim_exclusion0 <- function(txt, min_word = 0, treatment = "empty") {
   treatment <- match.arg(tolower(treatment), c("na", "remove","empty"))
   library(tokenizers)
   # https://github.com/dominiqueemmanuel/tokenizers

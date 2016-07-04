@@ -1,6 +1,8 @@
 #' @export intermediary_report
 intermediary_report <- function(file,object,global_table,txt0,f){
-save(file="do",list=ls())
+  object$dtm<-1*(object$dtm>0)
+
+# save(file="do",list=ls())
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do")
     print("Begin intermediary report...")
   library(dplyr)
@@ -86,8 +88,8 @@ for(kk in seq_along(global_table[,1])){
    e<-e[seq_along(e)<=30]
 
   t<-txt0[e]
-  t<-ifelse(nchar(t)>=270*2,paste0(substr(str_wrap(t,290),1,2*270-10)," [...]"),str_wrap(t,270))
-  tab4<-data.frame(`Top 30 des passages de verbatims (après traitements linguistiques) les plus représentatifs du thème`=t,stringsAsFactors = FALSE,check.names = FALSE)
+  t<-ifelse(nchar(t)>=270*2,paste0(substr(str_wrap(t,270),1,2*270-10)," [...]"),str_wrap(t,270))
+  tab4<-data.frame(`Top 30 des verbatims les plus représentatifs du thème`=t,stringsAsFactors = FALSE,check.names = FALSE)
   e<-f(subset(object$rule_table,topic==kk)$terms%>%unique)
   tab5<-data.frame(`Suggestion de mots complémentaires\npour la défintion du thème (règle)`=e,stringsAsFactors = FALSE,check.names = FALSE)
 
