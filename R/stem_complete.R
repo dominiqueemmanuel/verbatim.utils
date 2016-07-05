@@ -4,7 +4,8 @@ stem_complete <- function(txt,lang = "en"){
   library(dplyr)
   library(stringdist)
   library(data.table)
-
+# save(file="dom",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dom")
   txt<-factor(str_split(paste(txt,collapse   = " MOT_SEPARATEUR_DE_VERBATIM ")," ")[[1]])
   txt<-txt[str_trim(txt)!=""]
   length(txt)
@@ -18,7 +19,8 @@ stem_complete <- function(txt,lang = "en"){
   x<-x%>%dplyr::select(-t)%>%as.data.table
   x[,d:=stringdist(l2,l3,method="osa") + stringdist(l2,l3,method="cosine")/5  + stringdist(l2,l3,method="soundex")/20 ]
   y<-x%>%group_by(l2)%>%summarise(d=min(d))
-  x<-x<-inner_join(x,y,by=c("l2","d"))
+  x<-inner_join(x,y,by=c("l2","d"))%>%as.data.table
+  is(x)
   x<-x%>%dplyr::select(l2,l3)
   setkeyv(x,"l2")
   x<-x%>%unique

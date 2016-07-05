@@ -28,7 +28,7 @@ my_lapply <- function(x,fun, ... ,mc.cores = 4){
   # eval(quote({
   if(.Platform[[1]]=="windows") {
     n<-names(x)
-    res <-lapply_socket(x, fun, ... )
+    res <-lapply(x, fun, ... )
     names(res) <- n
     return(res)
   } else {

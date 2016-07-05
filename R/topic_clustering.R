@@ -21,7 +21,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   library(stringi)
   library(stringr)
    # save(file="do2",list=ls())
-  # save(file="do2",list=ls())
+   # save(file="do2",list=ls())
   # stop("xx")
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")
 
@@ -192,9 +192,19 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   }
   topic_matrix<-melt(txtd,id.vars="id")
   head(topic_matrix)
+  if(isTRUE((ncol(rule$new_topic_matrix)>0))){
   topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
   topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
-  topic_matrix<-topic_matrix[order(topic_matrix$id),]%>%select(-id)
+  topic_matrix<-topic_matrix[order(topic_matrix$id),,drop=FALSE]%>%select(-id)
+
+  } else {
+    topic_matrix<-topic_matrix%>%group_by(id)%>%summarise(value=0)
+    topic_matrix<-dcast(topic_matrix,id~.,fun.aggregate=sum,value.var="value")[,1,drop=FALSE]
+    topic_matrix<-topic_matrix[order(topic_matrix$id),,drop=FALSE]
+    topic_matrix<-topic_matrix%>%select(-id)
+  }
+
+
 
   return(list(word_distance_function=word_distance_function
               ,rule_table = rule$rule
@@ -513,7 +523,8 @@ transform_topic_to_rule <- function(dtm,topic_matrix,ignore_rule_table=NULL,word
 
 #' @export topic_clustering_remove
 topic_clustering_remove <- function(object,id_topic){
-  # save(file="do5",list=ls())
+   # save(file="do5",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do5")
   library(text2vec)
   library(dplyr)
   library(Matrix)
@@ -526,7 +537,7 @@ topic_clustering_remove <- function(object,id_topic){
   topic_matrix <- topic_matrix[,which(!(seq(ncol(topic_matrix)) %in% id_topic)),drop=FALSE]
 
   txtd<-object$txtd
-  txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t %in% id_topic) NULL else t)%>%unlist)]
+  txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t %in% id_topic) NULL else t)%>%unlist),drop=FALSE]
   colnames(txtd)[-1] <- paste0("cluster___",seq(ncol(txtd)-1))
 
 
@@ -551,7 +562,7 @@ topic_clustering_remove <- function(object,id_topic){
 
 #' @export topic_clustering_merge
 topic_clustering_merge <- function(object,id_topic){
-  # save(file="do6",list=ls())
+   # save(file="do6",list=ls())
   library(text2vec)
   library(dplyr)
   library(Matrix)
@@ -567,7 +578,7 @@ topic_clustering_merge <- function(object,id_topic){
   id_topic2<-id_topic[-1]
 
   topic_matrix[,id_topic1]<-apply(topic_matrix[,id_topic,drop=FALSE],1,max)
-  topic_matrix <- topic_matrix[,-id_topic2]
+  topic_matrix <- topic_matrix[,-id_topic2,drop=FALSE]
 
   txtd<-object$txtd
   txtd<-txtd[,c(1,1+sapply(seq(ncol(txtd)-1),function(t)if(t %in% id_topic2) NULL else t)%>%unlist)]
@@ -623,6 +634,8 @@ transform_rule_to_topic <- function(dtm,rule_table){
 
 #' @export topic_clustering_modify
 topic_clustering_modify <- function(object,rule_table){
+   # save(file="do70",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do70")
   rule_table<-rule_table[which(!is.na(rule_table$terms) & rule_table$terms!="NA"),,drop=FALSE]
   library(text2vec)
   library(dplyr)
@@ -670,6 +683,8 @@ topic_clustering_modify <- function(object,rule_table){
 
 #' @export topic_clustering_add
 topic_clustering_add <- function(object,rule_table){
+  # save(file="do71",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do71")
   rule_table<-rule_table[which(!is.na(rule_table$terms) & rule_table$terms!="NA"),,drop=FALSE]
 
   # save(file="do8",list=ls())
@@ -683,7 +698,7 @@ topic_clustering_add <- function(object,rule_table){
   library(data.table)
   library(dplyr)
 
-  id_topic <- max(object$rule_table$topic)+1
+  id_topic <- max(1,max(object$rule_table$topic)+1)
   rule_table$topic<-id_topic
 
   txtd<-object$txtd
