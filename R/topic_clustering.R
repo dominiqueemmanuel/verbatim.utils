@@ -15,7 +15,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   library(Matrix)
   library(skmeans)
   library(arules)
-  library(arulesViz)
+  #library(arulesViz)
   library(data.table)
   library(dplyr)
   library(stringi)
@@ -225,7 +225,7 @@ topic_clustering_divide <- function(object,id_topic,n=2,mc.cores = 4){
   library(Matrix)
   library(skmeans)
   library(arules)
-  library(arulesViz)
+  #library(arulesViz)
   library(data.table)
   library(dplyr)
 
@@ -530,7 +530,7 @@ topic_clustering_remove <- function(object,id_topic){
   library(Matrix)
   library(skmeans)
   library(arules)
-  library(arulesViz)
+  #library(arulesViz)
   library(data.table)
   library(dplyr)
   topic_matrix <- object$topic_matrix
@@ -568,7 +568,7 @@ topic_clustering_merge <- function(object,id_topic){
   library(Matrix)
   library(skmeans)
   library(arules)
-  library(arulesViz)
+  #library(arulesViz)
   library(data.table)
   library(dplyr)
 
@@ -642,7 +642,7 @@ topic_clustering_modify <- function(object,rule_table){
   library(Matrix)
   library(skmeans)
   library(arules)
-  library(arulesViz)
+  #library(arulesViz)
   library(data.table)
   library(dplyr)
 
@@ -694,7 +694,7 @@ topic_clustering_add <- function(object,rule_table){
   library(Matrix)
   library(skmeans)
   library(arules)
-  library(arulesViz)
+  #library(arulesViz)
   library(data.table)
   library(dplyr)
 
