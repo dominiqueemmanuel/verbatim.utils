@@ -1,7 +1,6 @@
 #' @export cloud_tree
 cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="steelblue",dtm_base=NULL,method="indice",min_tree=3,max_tree=13,min_cloud=3,max_cloud=22){
   library(igraph)
-  library(shinythemes)
   library(ggplot2)
   library(RColorBrewer)
   library(Matrix)
