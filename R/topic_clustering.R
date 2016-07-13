@@ -105,7 +105,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   #
 
   set.seed(123)
-  glove_model <- glove(tcm,vocabulary = vocab,shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
+  glove_model <- GloVe(vocabulary = vocab,shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
                        x_max = 10)
   # fitted_model = fit(glove_model, tcm, n_iter = 150, convergence_tol = 0.05, verbose = TRUE)
   word_vectors <- glove_model$fit_predict(tcm, n_iter = 150, convergence_tol = 0.005, verbose = TRUE)
