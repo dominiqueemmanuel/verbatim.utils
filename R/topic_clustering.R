@@ -72,7 +72,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
                              ngram = c(ngram_min = 1L, ngram_max = 1L)
                              # ,stopwords = tm::stopwords(lang)
   ) %>% prune_vocabulary(term_count_min = term_count_min,doc_proportion_max = 0.4,max_number_of_terms=5000)
-  vocab$vocab$terms<-force_encoding(vocab$vocab$terms)
+
   vocab$vocab<-subset(vocab$vocab,doc_counts>=term_count_min)
 
   q<-str_split(txtd$txt," ")
@@ -112,7 +112,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   # get word vectors
 
   rownames(word_vectors) <- force_encoding(rownames(tcm))
-
+  vocab$vocab$terms<-force_encoding(vocab$vocab$terms)
 
 
 
