@@ -4,7 +4,7 @@ stem_complete <- function(txt,lang = "en"){
   library(dplyr)
   library(stringdist)
   library(data.table)
-# save(file="dom",list=ls())
+ # save(file="dom",list=ls())
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dom")
   txt<-factor(str_split(paste(txt,collapse   = " MOT_SEPARATEUR_DE_VERBATIM ")," ")[[1]])
   txt<-txt[str_trim(txt)!=""]

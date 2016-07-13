@@ -1,5 +1,6 @@
 # name <- "nom d'une table"
 # final_report_verbatim <- function(file,dtm,table_ts = NULL){
+#' @export final_report_verbatim
 final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,table_ts = NULL,...){
   if(!is.null(object)){
     object$dtm<-1*(object$dtm>0)
@@ -114,6 +115,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
     X <-  object$dtm %*% object$word_vectors #2349 40
     Y<- t(object$txtd[,-1]) %*% X
     D<-(proxy::dist(Y%>%as.matrix,X%>%as.matrix,methode="cosine"))[,]%>%as.matrix
+    if(isTRUE(length(global_table)>0 && nrow(global_table)>0)){
     x<-data.frame(Thème=global_table$Occurences,row.names = global_table$`Libellé thème`)
     x<-x[order(x$Thème),,drop=FALSE]
     library(graphpdd)
@@ -146,7 +148,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
     mydoc = addPlot( doc = mydoc, fun = print, x =res$x$p_tree)
     mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes : arbre de thèmes"))
-
+}
     if(!is.null(table_ts)){
 
       Z<-list()
