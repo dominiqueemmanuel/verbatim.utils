@@ -20,7 +20,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   library(dplyr)
   library(stringi)
   library(stringr)
-   # save(file="do2",list=ls())
+    # save(file="do2",list=ls())
    # save(file="do2",list=ls())
   # stop("xx")
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")
@@ -74,14 +74,23 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   ) %>% prune_vocabulary(term_count_min = term_count_min,doc_proportion_max = 0.4,max_number_of_terms=5000)
 
   vocab$vocab<-subset(vocab$vocab,doc_counts>=term_count_min)
+if(nrow(vocab$vocab)==0){
+  it <- itoken(paste0(txtd$txt," _empty_"), preprocess_function = identity,tokenizer = stem_tokenizer)
+  vocab <- create_vocabulary(it,
+                             ngram = c(ngram_min = 1L, ngram_max = 1L)
+                             # ,stopwords = tm::stopwords(lang)
+  ) %>% prune_vocabulary(term_count_min = term_count_min,max_number_of_terms=5000)
 
+  vocab$vocab<-subset(vocab$vocab,doc_counts>=term_count_min)
+
+}
   q<-str_split(txtd$txt," ")
   a<-lapply(seq_along(q),function(t)rep(t,length(q[[t]])))
   q<-data.frame(id=unlist(a),terms=unlist(q),stringsAsFactors  =FALSE)
   q<-inner_join(q,vocab$vocab%>%select(terms),by="terms")
   q<-q%>%group_by(id)%>%summarise(txt=paste(terms,collapse=" "),n=length(terms))
   skip_grams_window <- max(3,min(6,quantile(q$n,0.5)))
-
+if(is.na(skip_grams_window))skip_grams_window<-2
   vocab_v <- vocab_vectorizer(vocab, grow_dtm = FALSE, skip_grams_window = skip_grams_window)
 
 
