@@ -526,10 +526,6 @@ transform_topic_to_rule <- function(dtm,topic_matrix,ignore_rule_table=NULL,word
 }
 
 
-
-
-
-
 #' @export topic_clustering_remove
 topic_clustering_remove <- function(object,id_topic){
    # save(file="do5",list=ls())

@@ -1,6 +1,6 @@
 Package: verbatim.utils
 Title: Useful functions for verbatims cleaning, visualization and topic modeling
-Version: 0.0.0.9025
+Version: 0.0.0.9026
 Authors@R: person("Dominique", "Emmanuel", email = "dominique_emmanuel@hotmail.com", role = c("aut", "cre"))
 Description: Useful functions for verbatims cleaning, visualization and topic modeling.
 Depends: igraph, data.table, Matrix, magrittr, grid, gridExtra, gtable, gridBase, smacof, ggthemes, ggplot2, ggrepel, skmeans, stringdist
