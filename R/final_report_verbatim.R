@@ -134,7 +134,9 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
     y<-t(x)%*%x
     y<-100*t(t(y/colSums(x))/colSums(x))*nrow(x)
     diag(y)<-100
+    # print("a")
     colnames(y)<-rownames(y)<-colnames(y)%>%str_wrap(5)
+    # print("b")
     max(y)
     library(seriation)
     s<-seriate(y,method="BEA_TSP")
@@ -149,16 +151,26 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
     mydoc = addPlot( doc = mydoc, fun = print, x =res$x$p_tree)
     mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes : arbre de thèmes"))
 }
-    if(!is.null(table_ts)){
+    if(!is.null(table_ts) && ncol(table_ts)>0){
 
       Z<-list()
       for(k1 in seq(ncol(table_ts))){
+
         e<-table(table_ts[,k1])
         e<-sort(names(e[e>=10]))
         z<-lapply(e,function(k2){
           1*(table_ts[,k1]==k2)
         })%>%do.call(cbind,.)
+        # print(is(z))
+        # print("+")
+        # print(length(z))
+        # print("+")
+        #
+        # print(str(z))
+         print("a1")
+        if(length(z)>0){
         colnames(z)<-e
+        # print("a2")
         z
 
         z[is.na(z)]<-0
@@ -175,6 +187,8 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
         mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
         mydoc = addPlot( doc = mydoc, fun = print, x =p,vector.graphic=FALSE)
         mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes et cibles (",colnames(table_ts)[k1],") : Indices croisés (base 100)"))
+        }
+        print("a2")
       }
     }
 
@@ -238,9 +252,13 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
       MyFTable[,1,to = 'header']= parLeft()
       mydoc = addFlexTable( doc = mydoc,MyFTable ,height=3,offx=0.4,offy=1.5,width=8.9)
 
-      if(!is.null(table_ts)){
+      if(!is.null(table_ts) && length(Z)>0){
+
         for(k1 in seq(length(Z))){
+          # save(file="dom",list=ls())
+          # print("i1")
           a<-data.frame(Global = colSums(Z[[k1]]),Thème=colSums(Z[[k1]][x[,kk]==1,,drop=FALSE]))
+          # print("i2")
           a$r<-rownames(a)
           a$q<-substr(rownames(a),1,rownames(a)%>%regexpr(" = ",.)-1)
           aa<-a%>%group_by(q)%>%summarise(s1=sum(Global),s2=sum(Thème))
@@ -249,8 +267,9 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
           a<-dplyr::select(a,-r)
           # a[,1]<-a[,1]/sum(a[,1])
           # a[,2]<-a[,2]/sum(a[,2])
+          print("x1")
           colnames(a)[2]<-global_table$`Libellé thème`[kk]
-
+          print("x2")
           # p<-graphpdd(data=t(a),is_mono = FALSE,type_general =c("Qualitatif","Qualitatif"),lib_var = c("",""))+
 
           p<-graphpdd(data=a,is_mono = TRUE,type_general =c("Qualitatif","Qualitatif"),lib_var = colnames(a),angle = 45 , nr1 = 40)+  scale_y_continuous(labels = scales::percent)
