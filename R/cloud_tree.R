@@ -9,9 +9,12 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
   library(ggthemes)
   library(ggrepel)
   library(Matrix)
+
+  # save(file="dom",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dom")
   set.seed(123)
   dtm<-dtm[,which(colSums(dtm)>0),drop=FALSE]
-
+  if(isTRUE(nrow(dtm)>1 & ncol(dtm)>1)){
 
   if(!is.null(dtm_base)){
     # dtm_base<-dtm_base[,e]
@@ -31,10 +34,9 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
   }
   e<-order(colSums(dtm),decreasing=TRUE)[seq(ncol(dtm))<=100]
   dtm<-dtm[,e]
-  # save(file="dom",list=ls())
-  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dom")
+
   ## wordcloud sera appelé via des ::
-  if(isTRUE(nrow(dtm)>1 & ncol(dtm)>1)){
+
     dtm0<-cBind(dtm[,1,drop=FALSE],dtm)
     if(is.null(word_vectors)){
     db<-as.matrix(proxy::dist(as.matrix(dtm0>0),by_rows = FALSE,method="Phi"))
