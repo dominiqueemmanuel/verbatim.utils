@@ -10,7 +10,7 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
   library(ggrepel)
   library(Matrix)
   set.seed(123)
-  dtm[,colSums(m)>0,drop=FALSE]
+  dtm[,which(colSums(m)>0),drop=FALSE]
 
   if(!is.null(dtm_base)){
     # dtm_base<-dtm_base[,e]
