@@ -2,7 +2,7 @@
 intermediary_report <- function(file,object,global_table,txt0,f){
   object$dtm<-1*(object$dtm>0)
 
- save(file="dok",list=ls())
+ # save(file="dok",list=ls())
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dok")
     print("Begin intermediary report...")
   library(dplyr)
