@@ -2,6 +2,9 @@
 # final_report_verbatim <- function(file,dtm,table_ts = NULL){
 #' @export final_report_verbatim
 final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,table_ts = NULL,...){
+
+   # save(file="dozz",list=ls())
+   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dozz")
   if(!is.null(object)){
     object$dtm<-1*(object$dtm>0)
   }
@@ -46,13 +49,16 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
   mydoc <- addSlide(mydoc,slide.layout = 'titre_section')
   mydoc <- addParagraph( mydoc,  paste0("Analyse simple globale"))
 
-  mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
+
   res<-intermediary_report_simple_analysis_affiche(dtm,title="TOTAL",only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
+  if(!is.null(res$x$p_cloud)){
+  mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
 
   mydoc <- addParagraph( mydoc,  paste0("Analyse simple globale - Nuage et arbre"))
   mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_cloud)
   mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_tree)
-
+  }
+  if(!is.null(res$tab2) && length(res$tab2) && NROW(res$tab2)>0 && nrow(res$tab2)>0){
   mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
 
   mydoc <- addParagraph( mydoc,  paste0("Top 30 en FREQUENCE des mots les plus représentés"))
@@ -61,7 +67,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm,tab
   MyFTable = setZebraStyle( MyFTable, odd = '#eeeeee', even = 'white' )
   MyFTable[,1:2]= textProperties( font.size = 10 )
   mydoc = addFlexTable( doc = mydoc,MyFTable ,height=4,offx=2,offy=1.5,width=6)
-
+  }
   ## analyse pas cible
   if(!is.null(table_ts)){
     ## analyse global

@@ -3,6 +3,9 @@
 # intermediary_report_simple_analysis(file="test.pdf",dtm=object$dtm,table_ts=object$txtd[,2:3])
 #' @export intermediary_report_simple_analysis
 intermediary_report_simple_analysis <- function(file,dtm,table_ts = NULL){
+   # save(file="doo",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/doo")
+
     dtm<-1*(dtm>0)
   print(file)
   library(stringr)

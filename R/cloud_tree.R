@@ -10,6 +10,7 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
   library(ggrepel)
   library(Matrix)
   set.seed(123)
+  dtm[,colSums(m)>0,drop=FALSE]
 
   if(!is.null(dtm_base)){
     # dtm_base<-dtm_base[,e]
@@ -29,8 +30,10 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
   }
   e<-order(colSums(dtm),decreasing=TRUE)[seq(ncol(dtm))<=100]
   dtm<-dtm[,e]
+  # save(file="dom",list=ls())
+  # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dom")
   ## wordcloud sera appelé via des ::
-  if(nrow(dtm)>1 & ncol(dtm)>1){
+  if(isTRUE(nrow(dtm)>1 & ncol(dtm)>1)){
     dtm0<-cBind(dtm[,1,drop=FALSE],dtm)
     if(is.null(word_vectors)){
     db<-as.matrix(proxy::dist(as.matrix(dtm0>0),by_rows = FALSE,method="Phi"))
@@ -38,12 +41,13 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
       db<-as.matrix(proxy::dist(as.matrix(word_vectors),by_rows = TRUE,method="cosine"))
     }
     d<-round(db/max(db,na.rm=TRUE),8)
-    d[is.na(d)]<-1
+    d[is.na(d)]<-0
     d<-d[-1,-1,drop=FALSE]
     rownames(d)<-colnames(d)<-gsub(" ","_",colnames(d),fixed=TRUE)
     d0<-d
     d<-(max(d)-d)
     d<-d/max(d)
+    d[is.na(d)]<-0
     diag(d)<-0
     maxd<-max(d)
     nd<-maxd-d
@@ -144,8 +148,16 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
 
     a<-lapply(seq_along(E(g)$weight),function(u)la[ends(g,u,names=FALSE),1])%>%do.call(rbind,.)%>%as.data.frame
     b<-lapply(seq_along(E(g)$weight),function(u)la[ends(g,u,names=FALSE),2])%>%do.call(rbind,.)%>%as.data.frame
+    if(nrow(a)==0){
+      a<-data.frame(x_dep=0,x_arr=0)[0,]
+    } else {
     colnames(a)<-c("x_dep","x_arr")
+    }
+    if(nrow(b)==0){
+      b<-data.frame(y_dep=0,y_arr=0)[0,]
+    } else {
     colnames(b)<-c("y_dep","y_arr")
+    }
     a<-data.frame(a,b)
 
     p<-ggplot(data=a)+geom_segment(aes(x=x_dep,y=y_dep,xend = x_arr, yend = y_arr),col="gray0",alpha=0.5,lwd=1)
