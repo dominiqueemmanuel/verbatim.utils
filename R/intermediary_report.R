@@ -68,7 +68,7 @@ for(kk in seq_along(global_table[,1])){
   # grid.newpage()
   grid.arrange(g1,g2,g3, ncol=3
                ,top =textGrob(paste0(global_table$`Libellé thème`[kk]," \n(",global_table$Occurences[kk]," occurences)"),gp=gpar(fontsize=20,font=3))
-               ,bottom =textGrob("Les mots en gras dans les deux tableaux de droite sont les mots apparaissant dans les règles définissant le thème. Vous pouvez ENRICHIR ce thème en identifiant les MOTS ABSENTS DES RÈGLES mais COHÉRENTS AVEC LE SENS GLOBAL que vous identifiez => ajoutez ensuite ces mots dans les règles du thème (au sein l'application). Vous pouvez également NETTOYER ce thème en identifiant les MOTS EN GRAS mais INCOHÉRENTS AVEC LE SENS GLOBAL => retirez ensuite ces mots dans les règles du thème (au sein de l'application). Vous pouvez également SUPPRIMER ce thème si AUCUN SENS GLOBAL ne ressort"%>%str_wrap(115),gp=gpar(fontsize=10,font=3),just="left")
+               ,bottom =textGrob("Les mots en gras dans les deux tableaux de droite sont les mots apparaissant dans les règles définissant le thème. Vous pouvez ENRICHIR ce thème en identifiant les MOTS ABSENTS DES RÈGLES mais COHÉRENTS AVEC LE SENS GLOBAL que vous identifiez => ajoutez ensuite ces mots dans les règles du thème (au sein de l'application). Vous pouvez également NETTOYER ce thème en identifiant les MOTS EN GRAS mais INCOHÉRENTS AVEC LE SENS GLOBAL => retirez ensuite ces mots dans les règles du thème (au sein de l'application). Vous pouvez également SUPPRIMER ce thème si AUCUN SENS GLOBAL ne ressort"%>%str_wrap(115),gp=gpar(fontsize=10,font=3),just="left")
   )
 
   x<-cloud_tree(object$dtm[which(object$txtd[,1+kk]==1),,drop=FALSE])#,dtm_base=object$dtm,method="indice")
@@ -91,7 +91,7 @@ for(kk in seq_along(global_table[,1])){
   t<-ifelse(nchar(t)>=270*2,paste0(substr(str_wrap(t,270),1,2*270-10)," [...]"),str_wrap(t,270))
   tab4<-data.frame(`Top 30 des verbatims les plus représentatifs du thème`=t,stringsAsFactors = FALSE,check.names = FALSE)
   e<-f(subset(object$rule_table,topic==kk)$terms%>%unique)
-  tab5<-data.frame(`Suggestion de mots complémentaires\npour la défintion du thème (règle)`=e,stringsAsFactors = FALSE,check.names = FALSE)
+  tab5<-data.frame(`Suggestion de mots complémentaires\npour la définition du thème (règle)`=e,stringsAsFactors = FALSE,check.names = FALSE)
 
   g4<-ft(tab4,str_wrap(colnames(tab4),65),u=c(25),cols=NULL,heights=0.65,base_size=6,padding = unit(c(0.5, 0.5), "mm"))
   g5<-ft(tab5,str_wrap(colnames(tab5),30),u=c(6),cols=NULL)
