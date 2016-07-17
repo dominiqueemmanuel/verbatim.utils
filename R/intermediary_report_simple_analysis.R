@@ -115,7 +115,7 @@ if(!only_result){
 
 
     x<-cloud_tree(dtm,...)#,dtm_base=object$dtm,method="indice")
-    if(!only_result){ # grid.newpage()
+    if(!only_result & !is.null(x$p_cloud)){ # grid.newpage()
   g<-arrangeGrob(x$p_cloud
                  ,x$p_tree
                  , ncol=2,top =textGrob(paste0(title," \n(",nrow(dtm)," occurences)"),gp=gpar(fontsize=20,font=3))
