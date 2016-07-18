@@ -1,7 +1,7 @@
 #' @export stem_complete
 stem_complete <- function(txt,lang = "en"){
 
-  plyr::mapvalues(lang,c("en", "fr","ge","sp","it","pt","ru","du")
+  lang2<-plyr::mapvalues(lang,c("en", "fr","ge","sp","it","pt","ru","du")
                   ,c("english","french","german","spanish","italian","portuguese","russian","dutch"))
   library(stringr)
   library(dplyr)
