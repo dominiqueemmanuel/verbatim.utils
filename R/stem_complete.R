@@ -1,6 +1,8 @@
 #' @export stem_complete
 stem_complete <- function(txt,lang = "en"){
-
+# save(file="../user_data/dom",list=ls())
+  # load("c:/Users/Dominique/Desktop/Stat_Regie/data/user_data/dom")
+  txt0<-txt
   lang2<-plyr::mapvalues(lang,c("en", "fr","ge","sp","it","pt","ru","du")
                   ,c("english","french","german","spanish","italian","portuguese","russian","dutch"))
   library(stringr)
