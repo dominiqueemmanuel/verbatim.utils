@@ -52,6 +52,50 @@ transform_pos <- function(x , lang = "en"){
                                                                                         x
                                                                                  ))))))))))))
   }
+  if(lang=="ge"){
+    out <- plyr::mapvalues(substr(x,1,1)
+                           ,c("A","C","D","N","P","R","S","V","Z","W","I","F")
+                           ,L
+                           , warn_missing = FALSE
+    )
+
+  }
+
+  if(lang=="sp"){
+    out <- plyr::mapvalues(substr(x,1,1)
+                           ,c("A","C","D","N","P","R","S","V","Z","W","I","F")
+                           ,L
+                           , warn_missing = FALSE
+    )
+
+  }
+
+  if(lang=="it"){
+    out <- plyr::mapvalues(substr(x,1,1)
+                           ,c("A","C","D","N","P","R","S","V","Z","W","I","F")
+                           ,L
+                           , warn_missing = FALSE
+    )
+
+  }
+
+  if(lang=="pt"){
+    out <- plyr::mapvalues(substr(x,1,1)
+                           ,c("A","C","D","N","P","R","S","V","Z","W","I","F")
+                           ,L
+                           , warn_missing = FALSE
+    )
+
+  }
+
+  if(lang=="ru"){
+    out <- plyr::mapvalues(substr(x,1,1)
+                           ,c("A","C","T","N","E","D","B","V","Z","W","J","F",    "C","P","R","Q","Y","I")
+                           ,c(L,"Nom","Adverbe","Adjectif","Verbe","Nombre","Interjection")
+                           , warn_missing = FALSE
+    )
+
+  }
   return(out)
 
 
@@ -133,7 +177,7 @@ library(stringi)
 
 #' @export lemmatisation
 lemmatisation  <- function(txt, lang="en", mc.cores = 4, path = NULL, remove = NULL) {
-  lang <- match.arg(tolower(lang), c("en", "fr"))
+  lang <- match.arg(tolower(lang), c("en", "fr","ge","sp","it","pt","ru"))
 
   if(.Platform[[1]]=="windows" & is.null(path)) {
     path <- "E:/freeling/bin/analyzer.exe"

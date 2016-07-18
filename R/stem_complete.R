@@ -1,5 +1,8 @@
 #' @export stem_complete
 stem_complete <- function(txt,lang = "en"){
+
+  plyr::mapvalues(lang,c("en", "fr","ge","sp","it","pt","ru","du")
+                  ,c("english","french","german","spanish","italian","portuguese","russian","dutch"))
   library(stringr)
   library(dplyr)
   library(stringdist)
@@ -11,7 +14,7 @@ stem_complete <- function(txt,lang = "en"){
   length(txt)
   t<-table(txt)
   l <- levels(txt)
-  l2<-sapply(l,SnowballC::wordStem,language=lang)
+  l2<-sapply(l,SnowballC::wordStem,language=lang2)
   out <- data.frame(l=l,l2=l2,t=as.vector(t),stringsAsFactors = FALSE)
   x<-out %>%group_by(l2)%>%summarise(t=max(t))
   x<-inner_join(out,x,by=c("l2","t"))
