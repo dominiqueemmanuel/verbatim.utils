@@ -2,10 +2,11 @@
 
 # intermediary_report_simple_analysis(file="test.pdf",dtm=object$dtm,table_ts=object$txtd[,2:3])
 #' @export intermediary_report_simple_analysis
-intermediary_report_simple_analysis <- function(file,dtm,table_ts = NULL){
-   # save(file="doo",list=ls())
+intermediary_report_simple_analysis <- function(file,dtm,table_ts = NULL,id_concat=NULL,names_concat="TOTAL"){
+    # save(file="doo",list=ls())
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/doo")
-
+if(is.null(id_concat))id_concat<-rep(1,nrow(dtm))
+if(max(id_concat)==1)names_concat<-paste0(names_concat,collapse=", ")
     dtm<-1*(dtm>0)
   print(file)
   library(stringr)
@@ -18,21 +19,23 @@ intermediary_report_simple_analysis <- function(file,dtm,table_ts = NULL){
   library(dplyr)
   library(Matrix)
 pdf(file,width=20,height=ceiling(20/(2)))
-
-intermediary_report_simple_analysis_affiche(dtm,title="TOTAL")
+for(kkk in sort(unique(id_concat))){
+  title <- names_concat[kkk]
+  idd<-which(id_concat==kkk)
+intermediary_report_simple_analysis_affiche(dtm[idd,,drop=FALSE],title=title)
 if(!is.null(table_ts)){
-  for(k1 in seq(ncol(table_ts))){
-    for(k2 in sort(unique(table_ts[,k1]))){
-      id<-which(table_ts[,k1]==k2)
+  for(k1 in seq(ncol(table_ts[idd,,drop=FALSE]))){
+    for(k2 in sort(unique(table_ts[idd,,drop=FALSE][,k1]))){
+      id<-which(table_ts[idd,,drop=FALSE][,k1]==k2)
       if(length(id)>=10){
-        intermediary_report_simple_analysis_affiche(dtm[id,],dtm_ref = dtm,title=paste0(colnames(table_ts)[k1]," = ",k2))
+        intermediary_report_simple_analysis_affiche(dtm[idd,,drop=FALSE][id,,drop=FALSE],dtm_ref = dtm[idd,,drop=FALSE],title=paste0(colnames(table_ts)[k1]," = ",k2))
       }
 
     }
 
   }
 }
-
+}
 dev.off()
 
 print("... End intermediary report")
