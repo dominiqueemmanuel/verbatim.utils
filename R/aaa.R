@@ -1,3 +1,8 @@
+addPlot2 <- function(...){
+  tryCatch({addPlot(...)},
+           error=function(e)print(e))
+}
+
 make_parallel_func <- function(fun){
   # eval(quote({
   if(.Platform[[1]]=="windows") {

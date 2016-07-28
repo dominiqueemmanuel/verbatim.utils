@@ -61,8 +61,8 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
   mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
 
   mydoc <- addParagraph( mydoc,  paste0("Analyse simple globale - Nuage et arbre"))
-  mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_cloud)
-  mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_tree)
+  mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
+  mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_tree)
   }
   if(!is.null(res$tab2) && length(res$tab2) && NROW(res$tab2)>0 && nrow(res$tab2)>0){
   mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
@@ -91,8 +91,8 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
           res <- intermediary_report_simple_analysis_affiche(dtm[id,],dtm_ref = dtm,title=paste0(colnames(table_ts)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
 
           mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - Nuage et arbre : ",colnames(table_ts)[k1]," = ",k2))
-          mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_cloud)
-          mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_tree)
+          mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
+          mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_tree)
 
           mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
           mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - Nuage et arbre : ",colnames(table_ts)[k1]," = ",k2))
@@ -137,7 +137,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
     p$layers[[1]]$aes_params$fill<-rgb(54/255,127/255,169/255)
 
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
-    mydoc = addPlot( doc = mydoc, fun = print, x =p)
+    mydoc = addPlot2( doc = mydoc, fun = print, x =p)
     mydoc <- addParagraph( mydoc,  paste0("Fréquences (nombres d'occurences) des thèmes"))
     x<-object$topic_matrix
     colnames(x)<-global_table$`Libellé thème`
@@ -156,11 +156,11 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
     p<-graphpdd(data = y,is_mono = FALSE,is_indice=TRUE,is_heatmap = TRUE,type_general = c("Qualitatif","Qualitatif"),lib_var=c("Thèmes","Thèmes"),angle = 45 , nr1 = 40)
     # p<-p+theme(axis.text.x = element_text(angle = 90, hjust = 1))
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
-    mydoc = addPlot( doc = mydoc, fun = print, x =p,vector.graphic=FALSE)
+    mydoc = addPlot2( doc = mydoc, fun = print, x =p,vector.graphic=FALSE)
     mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes : Indices croisés (base 100)"))
 
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
-    mydoc = addPlot( doc = mydoc, fun = print, x =res$x$p_tree)
+    mydoc = addPlot2( doc = mydoc, fun = print, x =res$x$p_tree)
     mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes : arbre de thèmes"))
 }
     if(!is.null(table_ts_origine) && ncol(table_ts_origine)>0){
@@ -197,7 +197,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
         p<-graphpdd(data = y,is_indice=TRUE,is_mono = FALSE,is_heatmap = TRUE,type_general = c("Qualitatif","Qualitatif"),lib_var=c(colnames(table_ts_origine)[k1],"Thèmes"),angle = 45 , nr1 = 40)
         # p<-p+theme(axis.text.x = element_text(angle = 90, hjust = 1))
         mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
-        mydoc = addPlot( doc = mydoc, fun = print, x =p,vector.graphic=FALSE)
+        mydoc = addPlot2( doc = mydoc, fun = print, x =p,vector.graphic=FALSE)
         mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes et cibles (",colnames(table_ts_origine)[k1],") : Indices croisés (base 100)"))
         }
         print("a2")
@@ -227,8 +227,8 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
 
       mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
       mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Nuage et arbre"))
-      mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_cloud)
-      mydoc = addPlot( doc = mydoc, fun = print, x = res$x$p_tree)
+      mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
+      mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_tree)
 
       mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
       mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Mots les plus fréquents"))
@@ -291,7 +291,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
           p$data$x<-a
           p<-p+ theme(legend.title=element_blank())
           mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
-          mydoc = addPlot( doc = mydoc, fun = print, x =p)
+          mydoc = addPlot2( doc = mydoc, fun = print, x =p)
 
           mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Croisement avec ",colnames(table_ts_origine)[k1]))
         }
