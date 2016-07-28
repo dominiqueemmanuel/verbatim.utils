@@ -1,8 +1,10 @@
 addPlot2 <- function(doc,...){
-  doc<-tryCatch({addPlot(doc = doc...)},
-           error=function(e){print(e);return(doc)})
+  doc<-tryCatch({addPlot(doc = doc,...)},
+                error=function(e){print(e);return(doc)})
   return(doc)
 }
+
+
 
 make_parallel_func <- function(fun){
   # eval(quote({
