@@ -124,7 +124,7 @@ cloud_tree <-function(dtm,word_vectors=NULL,automatic_color=TRUE,default_color="
       la<-la[seq(vcount(g)),,drop=FALSE]
     }
     if(nrow(d0)<3){
-       la<-layout.kamada.kawai(g,params=list(sart=seq_along(V(g))))
+       # la<-layout.kamada.kawai(g,params=list(sart=seq_along(V(g))))
    la<-layout_nicely(g)
     }
 
