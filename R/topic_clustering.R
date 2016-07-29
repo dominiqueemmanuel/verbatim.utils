@@ -71,7 +71,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   vocab <- create_vocabulary(it,
                              ngram = c(ngram_min = 1L, ngram_max = 1L)
                              # ,stopwords = tm::stopwords(lang)
-  ) %>% prune_vocabulary(term_count_min = term_count_min,doc_proportion_max = 0.4,max_number_of_terms=5000)
+  ) %>% prune_vocabulary(term_count_min = term_count_min,doc_proportion_max = 1,max_number_of_terms=5000)
 
   vocab$vocab<-subset(vocab$vocab,doc_counts>=term_count_min)
 if(nrow(vocab$vocab)==0){
