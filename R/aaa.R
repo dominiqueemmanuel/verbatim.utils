@@ -21,6 +21,7 @@ make_parallel_func <- function(fun){
   } else {
 
     function(txt,...,mc.cores = 4){
+      if(length(txt)==0)return(NULL)
       n<-names(txt)
       txt <- chunk2(txt, mc.cores)
       txt <- unlist(parallel::mclapply(txt, function(x) fun(x,...), mc.cores = mc.cores))

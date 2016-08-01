@@ -213,15 +213,16 @@ if(is.na(skip_grams_window))skip_grams_window<-2
   }
 
 
-
-  return(list(word_distance_function=word_distance_function
-              ,rule_table = rule$rule
-              ,topic_matrix=topic_matrix
-              ,vocab=vocab
-              ,word_vectors=word_vectors
-              ,txtd=txtd
-              ,dtm = dtm
-              ,txtp=txtp))
+  object<-list(word_distance_function=word_distance_function
+       ,rule_table = rule$rule
+       ,topic_matrix=topic_matrix
+       ,vocab=vocab
+       ,word_vectors=word_vectors
+       ,txtd=txtd
+       ,dtm = dtm
+       ,txtp=txtp)
+  # save(file="do2",list=c("object","txt"))
+  return(object)
 }
 
 #' @export topic_clustering_divide

@@ -88,7 +88,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
 
 
           mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
-          res <- intermediary_report_simple_analysis_affiche(dtm[id,],dtm_ref = dtm,title=paste0(colnames(table_ts)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
+          res <- intermediary_report_simple_analysis_affiche(dtm[id,,drop=FALSE],dtm_ref = dtm,title=paste0(colnames(table_ts)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
 
           mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - Nuage et arbre : ",colnames(table_ts)[k1]," = ",k2))
           mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
@@ -211,7 +211,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
       # z<-tab1$terms
 
       tab1<-tab1%>%group_by(rule)%>%summarise(`Règle`=paste0(terms,collapse=" ET "))%>%as.data.frame%>%select(Règle)
-      res <- intermediary_report_simple_analysis_affiche(object$dtm[which(object$txtd[,1+kk]==1),],dtm_ref = object$dtm,title=paste0(colnames(table_ts_origine)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
+      res <- intermediary_report_simple_analysis_affiche(object$dtm[which(object$txtd[,1+kk]==1),,drop=FALSE],dtm_ref = object$dtm,title=paste0(colnames(table_ts_origine)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
 
 
       mydoc <- addSlide(mydoc,slide.layout = 'rendu1')

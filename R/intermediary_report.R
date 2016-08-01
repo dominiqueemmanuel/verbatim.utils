@@ -2,7 +2,7 @@
 intermediary_report <- function(file,object,global_table,txt0,f){
   object$dtm<-1*(object$dtm>0)
 
- # save(file="dok",list=ls())
+  # save(file="dok",list=ls())
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dok")
     print("Begin intermediary report...")
   library(dplyr)
@@ -13,7 +13,7 @@ intermediary_report <- function(file,object,global_table,txt0,f){
   D<-(proxy::dist(Y%>%as.matrix,X%>%as.matrix,methode="cosine"))[,]%>%as.matrix
   dim(object$txtd)
 pdf(file,width=20,height=ceiling(20/(2)))
-for(kk in seq_along(global_table[,1])){
+for(kk in seq_along(global_table[,1])){print(kk)
   cat(".")
   tab1<-object$rule_table%>%subset(topic==kk)
   z<-tab1$terms
@@ -73,6 +73,7 @@ for(kk in seq_along(global_table[,1])){
 
   x<-cloud_tree(object$dtm[which(object$txtd[,1+kk]==1),,drop=FALSE])#,dtm_base=object$dtm,method="indice")
   # grid.newpage()
+  if(!is.null(x$p_cloud)){
   g<-arrangeGrob(x$p_cloud
                  ,x$p_tree
                  , ncol=2,top =textGrob(paste0(global_table$`Libellé thème`[kk]," \n(",global_table$Occurences[kk]," occurences)"),gp=gpar(fontsize=20,font=3))
@@ -80,7 +81,7 @@ for(kk in seq_along(global_table[,1])){
   vps <- baseViewports()
   pushViewport(vps$inner, vps$figure, vps$plot)
   grid.draw(g)
-
+  }
 
   # e<-intersect(object$txtd[order(D[kk,]),1]), which(object$topic_matrix[,kk]==1))
   # e<-e[seq_along(e)<=30]
