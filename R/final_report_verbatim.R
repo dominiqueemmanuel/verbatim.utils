@@ -57,7 +57,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
 
 
   res<-intermediary_report_simple_analysis_affiche(dtm,title="TOTAL",only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
-  if(!is.null(res$x$p_cloud)){
+  if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
   mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
 
   mydoc <- addParagraph( mydoc,  paste0("Analyse simple globale - Nuage et arbre"))
@@ -89,11 +89,11 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
 
           mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
           res <- intermediary_report_simple_analysis_affiche(dtm[id,,drop=FALSE],dtm_ref = dtm,title=paste0(colnames(table_ts)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
-
+         if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
           mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - Nuage et arbre : ",colnames(table_ts)[k1]," = ",k2))
           mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
           mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_tree)
-
+}
           mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
           mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - Nuage et arbre : ",colnames(table_ts)[k1]," = ",k2))
           mydoc <- addParagraph( mydoc,  paste0("Top 30 en FREQUENCE des mots les plus représentés"))
@@ -158,10 +158,11 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
     mydoc = addPlot2( doc = mydoc, fun = print, x =p,vector.graphic=FALSE)
     mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes : Indices croisés (base 100)"))
-
+ if(!is.null(res$x$p_tree)){
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
     mydoc = addPlot2( doc = mydoc, fun = print, x =res$x$p_tree)
     mydoc <- addParagraph( mydoc,  paste0("Analyses des liens entre thèmes : arbre de thèmes"))
+	}
 }
     if(!is.null(table_ts_origine) && ncol(table_ts_origine)>0){
 
@@ -225,11 +226,12 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
       MyFTable[,1,to = 'header']= parLeft()
       mydoc = addFlexTable( doc = mydoc,MyFTable ,height=5.7,offx=3.8,offy=1.6,width=2.5)
 
+	   if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
       mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
       mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Nuage et arbre"))
       mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
       mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_tree)
-
+}
       mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
       mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Mots les plus fréquents"))
       mydoc <- addParagraph( mydoc,  paste0("Top 30 en FREQUENCE des mots les plus représentés"))
