@@ -119,6 +119,7 @@ if(!only_result){
 
     x<-cloud_tree(dtm,...)#,dtm_base=object$dtm,method="indice")
     if(!only_result & !is.null(x$p_cloud) & !is.null(x$p_tree)){ # grid.newpage()
+	tryCatch({
   g<-arrangeGrob(x$p_cloud
                  ,x$p_tree
                  , ncol=2,top =textGrob(paste0(title," \n(",nrow(dtm)," occurences)"),gp=gpar(fontsize=20,font=3))
@@ -126,6 +127,7 @@ if(!only_result){
   vps <- baseViewports()
   pushViewport(vps$inner, vps$figure, vps$plot)
   grid.draw(g)
+   },error=function(e)NULL)
     }
     if(only_result){
       return(list(tab2=tab2,tab3=tab3,x=x))

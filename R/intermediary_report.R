@@ -74,6 +74,7 @@ for(kk in seq_along(global_table[,1])){print(kk)
   x<-cloud_tree(object$dtm[which(object$txtd[,1+kk]==1),,drop=FALSE])#,dtm_base=object$dtm,method="indice")
   # grid.newpage()
   if(!is.null(x$p_cloud) & !is.null(x$p_tree)){
+    tryCatch({
   g<-arrangeGrob(x$p_cloud
                  ,x$p_tree
                  , ncol=2,top =textGrob(paste0(global_table$`Libellé thème`[kk]," \n(",global_table$Occurences[kk]," occurences)"),gp=gpar(fontsize=20,font=3))
@@ -81,6 +82,7 @@ for(kk in seq_along(global_table[,1])){print(kk)
   vps <- baseViewports()
   pushViewport(vps$inner, vps$figure, vps$plot)
   grid.draw(g)
+    },error=function(e)NULL)
   }
 
   # e<-intersect(object$txtd[order(D[kk,]),1]), which(object$topic_matrix[,kk]==1))
