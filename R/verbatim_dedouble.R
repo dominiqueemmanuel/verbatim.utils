@@ -1,5 +1,5 @@
 #' @export verbatim_dedouble
-verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n= 125, bands = 25 , threshold = 1-cos(pi/5) ,progress=FALSE){
+verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n= 125, bands = 25, n_gram = 4 , threshold = 1-cos(pi/5) ,progress=FALSE){
   library(textreuse)
   library(dplyr)
   library(stringr)
@@ -12,7 +12,7 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n= 125, bands = 25 , 
 
 
   minhash <- minhash_generator(n = n, seed = 3552)
-  e2<-suppressWarnings(TextReuseCorpus(text=txt, tokenizer = tokenize_ngrams, n = 5,
+  e2<-suppressWarnings(TextReuseCorpus(text=txt, tokenizer = tokenize_ngrams, n = n_gram,
                                        minhash_func = minhash, keep_tokens = TRUE,
                                        progress = progress))
   a0<-skipped(e2)%>%expand.grid(a=.,b=.)
