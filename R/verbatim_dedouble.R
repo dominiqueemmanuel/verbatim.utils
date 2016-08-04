@@ -1,5 +1,5 @@
 #' @export verbatim_dedouble
-verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n= 250, bands = 50 , threshold = 1-cos(pi/5) ){
+verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n= 125, bands = 25 , threshold = 1-cos(pi/5) ,progress=FALSE){
   library(textreuse)
   library(dplyr)
   library(stringr)
@@ -14,13 +14,13 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n= 250, bands = 50 , 
   minhash <- minhash_generator(n = n, seed = 3552)
   e2<-suppressWarnings(TextReuseCorpus(text=txt, tokenizer = tokenize_ngrams, n = 5,
                                        minhash_func = minhash, keep_tokens = TRUE,
-                                       progress = FALSE))
+                                       progress = progress))
   a0<-skipped(e2)%>%expand.grid(a=.,b=.)
   a0$score<-NA
   e2<-tryCatch({
-    buckets <- lsh(e2, bands = bands, progress = FALSE)
+    buckets <- lsh(e2, bands = bands, progress = progress)
     candidates <- lsh_candidates(buckets)
-    e2<-lsh_compare(candidates, e2, jaccard_similarity, progress = FALSE)
+    e2<-lsh_compare(candidates, e2, jaccard_similarity, progress = progress)
     e2<-as.data.frame(e2)
     e2<-rbind(e2,a0)
   },error=function(err){print(err);a0})
