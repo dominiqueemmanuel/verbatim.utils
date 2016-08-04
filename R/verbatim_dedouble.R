@@ -4,7 +4,8 @@
 # # txt<-c(data$`Full Text`%>%rep(1),paste0("Je me demande si en fait il faut faire ",data$`Full Text`%>%rep(1)))
 # txt<-data$`Full Text`
 # length(txt)
-
+# data<-read.csv("c:/Users/Dominique/Downloads/Sentiment(1).csv",sep=",")
+ # txt0<-txt<-data$text%>%as.character
 #' @export verbatim_dedouble
 #'
 #'
@@ -14,8 +15,17 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   library(stringr)
   library(Matrix)
   library(igraph)
+  library(data.table)
   names(txt)<-NULL
-
+  txt<-data.table(txt=txt,id=seq_along(txt),key="txt")
+  txt2<-unique(txt)
+  setnames(txt2,"id","id2")
+  txt2<-txt[txt2]
+  txt2<-txt2[order(txt2$id),]
+  id2<-txt2$id2
+  id<-which(!duplicated(txt2$id2))
+  txt<-txt2$txt[id]
+  # duplicated(txt)%>%table
 
   np<-options("mc.cores")$mc.cores
   on.exit(options("mc.cores" = np))
@@ -62,8 +72,8 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   M<-sparseMatrix(i=c(a,b),j=c(b,a),x=1,dims = rep(length(txt),2))
   g<-graph_from_adjacency_matrix(M,"undirected")
   cg<-components(g)
-  cg$csize%>%table
-  return(list(id=cg$membership,weight=cg$csize))
+   return(list(id=cg$membership[fastmatch::fmatch(id2,id)],weight=cg$csize))
+
 }
 # verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 200L, bands = 50L , threshold = 1-cos(pi/3) ,progress=FALSE){
 #   library(text2vec)
