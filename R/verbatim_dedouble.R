@@ -1,15 +1,16 @@
 # data <- readxl::read_excel("c:/Users/Dominique/Desktop/Documents présentation TNS 28 06 2016/data/tbl_master.xlsx")
+# txt<-data$`Full Text`
 # library(dplyr)
 # library(verbatim.utils)
 # # txt<-c(data$`Full Text`%>%rep(1),paste0("Je me demande si en fait il faut faire ",data$`Full Text`%>%rep(1)))
 # txt<-data$`Full Text`
 # length(txt)
 # data<-read.csv("c:/Users/Dominique/Downloads/Sentiment(1).csv",sep=",")
- # txt0<-txt<-data$text%>%as.character
+# txt0<-txt<-data$text%>%as.character
 #' @export verbatim_dedouble
 #'
 #'
-verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, bands = 5L , threshold = 1-cos(pi/3) ,progress=FALSE){
+verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, bands = 5L , threshold = 1-cos(pi/3) ,progress=FALSE, use_duplicated = TRUE){
   library(textreuse)
   library(dplyr)
   library(stringr)
@@ -17,6 +18,7 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   library(igraph)
   library(data.table)
   names(txt)<-NULL
+  if(use_duplicated){
   txt<-data.table(txt=txt,id=seq_along(txt),key="txt")
   txt2<-unique(txt)
   setnames(txt2,"id","id2")
@@ -25,6 +27,7 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   id2<-txt2$id2
   id<-which(!duplicated(txt2$id2))
   txt<-txt2$txt[id]
+  }
   # duplicated(txt)%>%table
 
   np<-options("mc.cores")$mc.cores
@@ -43,7 +46,7 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
     candidates <- lsh_candidates(buckets)
     e2<-lsh_compare(candidates, e20, jaccard_similarity, progress = progress)
     e2<-as.data.frame(e2)
-
+    e2<-subset(e2,score>=lsh_threshold(n_minhashes,bands)/2)
 
 
     a<-substr(e2$a,5,1000)%>%as.numeric
@@ -72,8 +75,14 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   M<-sparseMatrix(i=c(a,b),j=c(b,a),x=1,dims = rep(length(txt),2))
   g<-graph_from_adjacency_matrix(M,"undirected")
   cg<-components(g)
-   return(list(id=cg$membership[fastmatch::fmatch(id2,id)],weight=cg$csize))
+  id0<-cg$membership
+  w<-cg$csize
 
+if(use_duplicated){
+   return(list(id=id0[fastmatch::fmatch(id2,id)],weight=w))
+} else {
+  return(list(id=id0,weight=w))
+}
 }
 # verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 200L, bands = 50L , threshold = 1-cos(pi/3) ,progress=FALSE){
 #   library(text2vec)
