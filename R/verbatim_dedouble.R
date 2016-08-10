@@ -93,8 +93,12 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   w<-cg$csize
 
 if(use_duplicated){
-   return(list(id=id0[fastmatch::fmatch(id2,id)],weight=w))
+    id0<-id0[fastmatch::fmatch(id2,id)]
+    w<-(data.frame(id=id0)%>%group_by(id)%>%summarise(n=n())%>%arrange(id))$n
+   return(list(id=id0,weight=w))
 } else {
+
+  w<-(data.frame(id=id0)%>%group_by(id)%>%summarise(n=n())%>%arrange(id))$n
   return(list(id=id0,weight=w))
 }
 }
