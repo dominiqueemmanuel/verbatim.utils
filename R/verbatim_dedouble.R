@@ -1,3 +1,14 @@
+# library(dplyr)
+# library(readxl)
+# library(verbatim.utils)
+# f1<-read_excel("e:/Travail - Freelance/TNS/brexit/StreamFrenchQueryBrexit1.xlsx")
+# dim(f1)
+# f2<-read_excel("e:/Travail - Freelance/TNS/brexit/StreamFrenchQuery2.xlsx")
+# dim(f2)
+# f<-rbind(f1,f2)
+# f$`Sound Bite Text`[1]
+# txt<-f$`Sound Bite Text`
+# txt=txt[10001:20000]
 # data <- readxl::read_excel("c:/Users/Dominique/Desktop/Documents présentation TNS 28 06 2016/data/tbl_master.xlsx")
 # txt<-data$`Full Text`
 # library(dplyr)
@@ -10,8 +21,10 @@
 #' @export verbatim_dedouble
 #'
 #'
+#'
 verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, bands = 5L , threshold = 1-cos(pi/3) ,progress=FALSE, use_duplicated = TRUE){
-  library(textreuse)
+   # exact=FALSE;mc.cores = 4L; n_minhashes= 30L; bands = 5L ; threshold = 1-cos(pi/3) ;progress=TRUE; use_duplicated = TRUE
+    library(textreuse)
   library(dplyr)
   library(stringr)
   library(Matrix)
@@ -66,6 +79,7 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   a0$a<-a0$a%>%as.character%>%substr(5,1000)%>%as.numeric
   a0$b<-a0$b%>%as.character%>%substr(5,1000)%>%as.numeric
   d<-stringdist::stringdist(txt[a0$a],txt[a0$b],method="cosine",nthread= mc.cores)
+  a0$score<-0
   a0$d<-d
   a0<-a0[d<=if(exact) 1e-6 else 0.05,]
   e2<-rbind(e2,a0)
