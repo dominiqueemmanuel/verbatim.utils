@@ -20,7 +20,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   library(dplyr)
   library(stringi)
   library(stringr)
-    # save(file="do2",list=ls())
+     # save(file="do2",list=ls())
    # save(file="do2",list=ls())
   # stop("xx")
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")

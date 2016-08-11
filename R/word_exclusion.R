@@ -70,7 +70,7 @@ word_exclusion0 <- function(txt
   }
 
   if("heure" %in% excluded_form){
-    txt <- gsub("\\d{1,2}(( ?)(\\:|h|H)( ?))(\\d{1,2}(?:[:.]\\d+)?)?", if(!replace_excluded_form)  "" else " SPECIAL_FORM_HEURE ", txt ,perl=TRUE)
+    txt <- gsub("\\b\\d{1,2}(( ?)(\\:|h|H)( ?))(\\d{1,2}(?:[:.]\\d+)?)?\\b", if(!replace_excluded_form)  "" else " SPECIAL_FORM_HEURE ", txt ,perl=TRUE)
     # txt <- rm_time(txt, replacement = if(replace_excluded_form) " SPECIAL_FORM_HEURE " else "")
   }
 
