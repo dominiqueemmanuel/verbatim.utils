@@ -89,7 +89,7 @@ for(kk in seq_along(global_table[,1])){print(kk)
   # e<-e[seq_along(e)<=30]
    e<-intersect(order(D[kk,]), which(object$txtd[,1+kk]==1))
    e<-e[seq_along(e)<=30]
-
+   tryCatch({
   t<-txt0[e]
   t<-ifelse(nchar(t)>=270*2,paste0(substr(str_wrap(t,270),1,2*270-10)," [...]"),str_wrap(t,270))
   tab4<-data.frame(`Top 30 des verbatims les plus représentatifs du thème`=t,stringsAsFactors = FALSE,check.names = FALSE)
@@ -101,7 +101,7 @@ for(kk in seq_along(global_table[,1])){print(kk)
   grid.arrange(g4,g5, ncol=2
                ,top =textGrob(paste0(global_table$`Libellé thème`[kk]," \n(",global_table$Occurences[kk]," occurences)"),gp=gpar(fontsize=20,font=3))
 
-  )
+  )},error=function(e)NULL)
 }
 dev.off()
 

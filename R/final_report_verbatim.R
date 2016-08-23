@@ -3,7 +3,7 @@
 #' @export final_report_verbatim
 final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_origine,table_ts_origine = NULL,id_concat=NULL,names_concat="TOTAL",...){
   if(is.null(id_concat))id_concat<-rep(1,nrow(dtm))
-   # save(file="dozz",list=ls())
+    # save(file="dozz",list=ls())
    # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dozz")
   if(!is.null(object)){
     object$dtm<-1*(object$dtm>0)
@@ -55,7 +55,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
   mydoc <- addSlide(mydoc,slide.layout = 'titre_section')
   mydoc <- addParagraph( mydoc,  paste0("Analyse simple globale - ",nom_var))
 
-
+tryCatch({
   res<-intermediary_report_simple_analysis_affiche(dtm,title="TOTAL",only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
   if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
   mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
@@ -74,6 +74,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
   MyFTable[,1:2]= textProperties( font.size = 10 )
   mydoc = addFlexTable( doc = mydoc,MyFTable ,height=4,offx=2,offy=1.5,width=6)
   }
+},error=function(e)NULL)
   ## analyse pas cible
   if(!is.null(table_ts_origine)){
     ## analyse global
@@ -149,10 +150,12 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
     # print("a")
     colnames(y)<-rownames(y)<-colnames(y)%>%str_wrap(5)
     # print("b")
-    max(y)
+    y[is.na(y)]<-0
     library(seriation)
+    tryCatch({
     s<-seriate(y,method="BEA_TSP")
     y<-y[get_order(s,dim=1),get_order(s,dim=2)]
+    },error=function(e)NULL)
     p<-graphpdd(data = y,is_mono = FALSE,is_indice=TRUE,is_heatmap = TRUE,type_general = c("Qualitatif","Qualitatif"),lib_var=c("Thèmes","Thèmes"),angle = 45 , nr1 = 40)
     # p<-p+theme(axis.text.x = element_text(angle = 90, hjust = 1))
     mydoc <- addSlide(mydoc,slide.layout = 'rendu1')
@@ -251,6 +254,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
 
       mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
       mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Verbatims représentatifs"))
+      tryCatch({
       mydoc <- addParagraph( mydoc,  paste0("Top 30 des verbatims les plus représentatifs du thème"))
       e<-intersect(order(D[kk,]), which(object$txtd[,1+kk]==1))
       e<-e[seq_along(e)<=30]
@@ -265,10 +269,11 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
       MyFTable[,1]= parLeft()
       MyFTable[,1,to = 'header']= parLeft()
       mydoc = addFlexTable( doc = mydoc,MyFTable ,height=3,offx=0.4,offy=1.5,width=8.9)
-
+      },error=function(e)NULL)
       if(!is.null(table_ts_origine) && length(Z)>0){
 
         for(k1 in seq(length(Z))){
+          tryCatch({
           # save(file="dom",list=ls())
           # print("i1")
           a<-data.frame(Global = colSums(Z[[k1]]),Thème=colSums(Z[[k1]][x[,kk]==1,,drop=FALSE]))
@@ -296,6 +301,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
           mydoc = addPlot2( doc = mydoc, fun = print, x =p)
 
           mydoc <- addParagraph( mydoc,  paste0("Analyse du thème ",global_table[kk,]$`Libellé thème`,occ," - Croisement avec ",colnames(table_ts_origine)[k1]))
+          },error=function(e)NULL)
         }
       }
 

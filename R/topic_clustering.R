@@ -9,7 +9,7 @@
 # txt<-gsub("[[:space:]]+"," ",txt)
 
 #' @export topic_clustering
-topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponctuation_phrase_",term_count_min = 5 , m=1.05, threshold = 0.9,word_vectors_size=50 , is_stem = FALSE,mc.cores = 4){
+topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponctuation_phrase_",term_count_min = 5 , m=1.05, threshold = 0.9,word_vectors_size=50 , is_stem = FALSE,mc.cores = 4, rule_table_origin = NULL,names_origin = NULL){
   library(text2vec)
   library(dplyr)
   library(Matrix)
@@ -153,7 +153,7 @@ if(is.na(skip_grams_window))skip_grams_window<-2
   # for(k in seq_along(e)){cat(".")
   #   dtm2[,e[[1]][1]] <- 1*(rowSums(dtm[,e[[1]],drop=FALSE])>0)
   # }
-
+if(is.null(rule_table_origin)){
   set.seed(123)
   id<-which(rowSums(dtm)>0)
   m0<-LDA(n_topics = nb_topic,vocabulary = vocab)
@@ -180,30 +180,59 @@ if(is.na(skip_grams_window))skip_grams_window<-2
                                   # ,plot = TRUE,verbose = TRUE
 ,mc.cores = mc.cores)
 
+
   word_distance_function <- tryCatch(word_distance(word_vectors),error=function(x)x)
 
-  # e<-unique(rule$rule$terms)
-  # e2<-word_distance_function(e,n = length(e))
-  # e<-unique(c(e,e2))
-  # length(e)
-  # m0<-LDA(n_topics = nb_topic,vocabulary = vocab)
-  # a<-m0$fit_predict(dtm[,e],n_iter = 200)
-  # topic_matrix<-as(a>threshold,"Matrix")
-  # rule <- transform_topic_to_rule(dtm = dtm,topic_matrix = topic_matrix,word_vectors = word_vectors)
-
-  # new_topic_matrix <-
-  # id,]%>%select(id)
   txtd <- data.frame(id=txtd$id)
   for(k in seq(ncol(rule$new_topic_matrix))){
     txtd[[colnames(rule$new_topic_matrix)[k]]]<-0
     txtd[[colnames(rule$new_topic_matrix)[k]]][id]<-rule$new_topic_matrix[,k]
   }
+
+
+
+
+} else {
+
+  qq<-my_lapply(rule_table_origin$topic%>%sort%>%unique,function(ee){cat(".")
+    e<-subset(rule_table_origin,topic==ee)
+
+
+    qq0<-sapply(sort(unique(e$rule)),function(t){
+      e2<-subset(e,rule==t)
+
+      a<-force_encoding(e$terms)
+      a<-intersect(colnames(dtm),a)
+      if(length(a)==0)return(rep(0,nrow(dtm)))
+      Matrix::rowSums(dtm[,a,drop=FALSE]>0)==length(t)
+
+    })
+    matrix(1*(Matrix::rowSums(matrix(qq0,nrow=nrow(dtm)))>0),nrow=nrow(dtm))
+
+  },mc.cores = mc.cores)
+  qq<-do.call(cbind,qq)
+  topic_matrix<-qq
+  if(!is.null(names_origin))colnames(topic_matrix)<-names_origin
+  rule<-list(rule=rule_table_origin,new_topic_matrix=topic_matrix,q=NULL)
+
+
+  word_distance_function <- tryCatch(word_distance(word_vectors),error=function(x)x)
+
+  txtd <- data.frame(id=txtd$id)
+  for(k in seq(ncol(rule$new_topic_matrix))){
+    txtd[[colnames(rule$new_topic_matrix)[k]]]<-0
+    txtd[[colnames(rule$new_topic_matrix)[k]]]<-rule$new_topic_matrix[,k]
+  }
+
+
+}
+
   topic_matrix<-melt(txtd,id.vars="id")
   head(topic_matrix)
   if(isTRUE((ncol(rule$new_topic_matrix)>0))){
-  topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
-  topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
-  topic_matrix<-topic_matrix[order(topic_matrix$id),,drop=FALSE]%>%select(-id)
+    topic_matrix<-topic_matrix%>%group_by(id,variable)%>%summarise(value=max(value))
+    topic_matrix<-dcast(topic_matrix,id~variable,fun.aggregate=sum,value.var="value")
+    topic_matrix<-topic_matrix[order(topic_matrix$id),,drop=FALSE]%>%select(-id)
 
   } else {
     topic_matrix<-topic_matrix%>%group_by(id)%>%summarise(value=0)
@@ -211,7 +240,6 @@ if(is.na(skip_grams_window))skip_grams_window<-2
     topic_matrix<-topic_matrix[order(topic_matrix$id),,drop=FALSE]
     topic_matrix<-topic_matrix%>%select(-id)
   }
-
 
   object<-list(word_distance_function=word_distance_function
        ,rule_table = rule$rule
