@@ -81,7 +81,7 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
   d<-stringdist::stringdist(txt[a0$a],txt[a0$b],method="cosine",nthread= mc.cores)
   a0$score<-0
   a0$d<-d
-  a0<-a0[d<=if(exact) 1e-6 else 0.05,]
+  a0<-a0[a0$d<=(if(exact) 1e-6 else 0.05),]
   e2<-rbind(e2,a0)
 
   a<-e2$a
