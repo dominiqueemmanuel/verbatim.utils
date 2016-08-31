@@ -43,6 +43,7 @@ print("... End intermediary report")
 
 
 intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title,only_result=FALSE,...) {
+  tab0<-NULL
   cat(".")
   library(stringr)
   library(grid)
@@ -89,9 +90,12 @@ tab2<-tab3<-NULL
                    # ,`Indice\n (base 100)`=round(100*a/b,0)
                    ,stringsAsFactors = FALSE,check.names=FALSE)
     b<-inner_join(b1,b2,by="Mot")
+    tab0<-b
+    attr(tab0,"N")<-NROW(dtm)
     b<-b%>%mutate(`Indice\n (base 100)`=round(100*`Fréquence`/`Fréquence\n globale`,0))%>%
       mutate(`Fréquence`=paste0(round(`Fréquence`*100,2),"%"))%>%
       mutate(`Fréquence\n globale`=paste0(round(`Fréquence\n globale`*100,2),"%"))
+
     tab2<-b[id1,]
     tab3<-b[id2,]
 if(!only_result){
@@ -105,6 +109,8 @@ if(!only_result){
   } else {
     b<-data.frame(`Mot` = colnames(dtm),`Fréquence`=paste0(round(a*100,2),"%")
                   ,stringsAsFactors = FALSE,check.names=FALSE)
+    tab0<-data.frame(`Mot` = colnames(dtm),`Fréquence`=a,stringsAsFactors = FALSE,check.names=FALSE)
+    attr(tab0,"N")<-NROW(dtm)
     tab2<-b[id1,]
     if(!only_result){
     g2<-ft(tab2,str_wrap("Top 30 en FREQUENCE de mots les plus représentés",30),c(5,3))
@@ -130,7 +136,7 @@ if(!only_result){
    },error=function(e)NULL)
     }
     if(only_result){
-      return(list(tab2=tab2,tab3=tab3,x=x))
+      return(list(tab2=tab2,tab3=tab3,x=x,tab0=tab0))
     }
 
 

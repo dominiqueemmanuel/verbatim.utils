@@ -1,9 +1,12 @@
 # name <- "nom d'une table"
 # final_report_verbatim <- function(file,dtm,table_ts = NULL){
 #' @export final_report_verbatim
-final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_origine,table_ts_origine = NULL,id_concat=NULL,names_concat="TOTAL",...){
+final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_origine,table_ts_origine = NULL,id_concat=NULL,names_concat="TOTAL",title = "Analyse de verbatim",...){
+  stat_freq_cible <- NULL
+  stat_freq_topic <- NULL
+  stat_freq_global <- NULL
   if(is.null(id_concat))id_concat<-rep(1,nrow(dtm))
-    # save(file="dozz",list=ls())
+     # save(file="dozz",list=ls())
    # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dozz")
   if(!is.null(object)){
     object$dtm<-1*(object$dtm>0)
@@ -31,14 +34,14 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
   model_file <- system.file("data/model.pptx",package = "verbatim.utils")
   # model_file<-'data/model.pptx'
   library(ReporteRs)
-  mydoc <- pptx(  title = "Verbatims"
+  mydoc <- pptx(  title = title
                   ,template = model_file
   )
   date<-format(Sys.Date(),"%d/%m/%Y")
 
   ## titre
   mydoc <- addSlide(mydoc,slide.layout = 'titre_global')
-  mydoc <- addParagraph( mydoc,  paste0("Analyse de verbatims\n",name))
+  mydoc <- addParagraph( mydoc,  paste0(title,"\n",name))
   mydoc <- addParagraph( mydoc, date)
 
 
@@ -46,7 +49,9 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
   ## Analyse(s) simple(s)
   ###################################
   if(max(id_concat)==1)names_concat<-paste0(names_concat,collapse=", ")
+  kkk0<-0
   for(kkk in sort(unique(id_concat))){
+    kkk0<-kkk0+1
     nom_var <- names_concat[kkk]
     idd<-which(id_concat==kkk)
     dtm<-dtm_origine[idd,,drop=FALSE]
@@ -57,6 +62,8 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
 
 tryCatch({
   res<-intermediary_report_simple_analysis_affiche(dtm,title="TOTAL",only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
+  stat_freq_global<-c(stat_freq_global,list(res$tab0))
+  names(stat_freq_global)[length(stat_freq_global)]<-names_concat[kkk0]
   if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
   mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
 
@@ -80,9 +87,12 @@ tryCatch({
     ## analyse global
     mydoc <- addSlide(mydoc,slide.layout = 'titre_section')
     mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - ",nom_var))
+    stat_freq_cible0<-NULL
 
     for(k1 in seq(ncol(table_ts))){
-      for(k2 in sort(unique(table_ts[,k1]))){
+      stat_freq_cible00<-NULL
+      eee<-sort(unique(table_ts[,k1]))
+      for(k2 in eee){
         id<-which(table_ts[,k1]==k2)
         if(length(id)>=10){
 
@@ -90,7 +100,9 @@ tryCatch({
 
           mydoc <- addSlide(mydoc,slide.layout = 'rendu2')
           res <- intermediary_report_simple_analysis_affiche(dtm[id,,drop=FALSE],dtm_ref = dtm,title=paste0(colnames(table_ts)[k1]," = ",k2),only_result = TRUE,min_tree=2,max_tree=8,min_cloud=3,max_cloud=12)
-         if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
+          stat_freq_cible00<-c(stat_freq_cible00,list(res$tab0))
+          names(stat_freq_cible00)[length(stat_freq_cible00)]<-as.character(k2)
+          if(!is.null(res$x$p_cloud) & !is.null(res$x$p_tree)){
           mydoc <- addParagraph( mydoc,  paste0("Analyses simples par cible - Nuage et arbre : ",colnames(table_ts)[k1]," = ",k2))
           mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_cloud)
           mydoc = addPlot2( doc = mydoc, fun = print, x = res$x$p_tree)
@@ -114,7 +126,13 @@ tryCatch({
         }
 
       }
+      stat_freq_cible0<-c(stat_freq_cible0,list(stat_freq_cible00))
+      names(stat_freq_cible0)[length(stat_freq_cible0)]<-colnames(table_ts)[k1]
     }
+    # stat_freq_cible<-stat_freq_cible0
+    stat_freq_cible<-c(stat_freq_cible,list(stat_freq_cible0))
+    names(stat_freq_cible)[length(stat_freq_cible)]<-names_concat[kkk0]
+
   }
 
 }
@@ -248,7 +266,7 @@ tryCatch({
       MyFTable2 = setZebraStyle( MyFTable2, odd = '#eeeeee', even = 'white' )
       MyFTable2[,1:4]= textProperties( font.size = 9 )
 
-
+      stat_freq_topic <- c(stat_freq_topic,list(res$tab0))
       mydoc = addFlexTable( doc = mydoc,MyFTable1 ,height=4,offx=0.76,offy=1.5,width=3.5)
       mydoc = addFlexTable( doc = mydoc,MyFTable2 ,height=4,offx=5.76,offy=1.5,width=3.5)
 
@@ -309,5 +327,5 @@ tryCatch({
   }
 
   writeDoc( mydoc, file )
-
+return(list(stat_freq_global=stat_freq_global,stat_freq_topic=stat_freq_topic,stat_freq_cible=stat_freq_cible))
 }
