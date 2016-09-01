@@ -201,10 +201,10 @@ if(is.null(rule_table_origin)){
     qq0<-sapply(sort(unique(e$rule)),function(t){
       e2<-subset(e,rule==t)
 
-      a<-force_encoding(e$terms)
+      a<-force_encoding(e2$terms)
       a<-intersect(colnames(dtm),a)
       if(length(a)==0)return(rep(0,nrow(dtm)))
-      Matrix::rowSums(dtm[,a,drop=FALSE]>0)==length(t)
+      Matrix::rowSums(dtm[,a,drop=FALSE]>0)==length(a)
 
     })
     matrix(1*(Matrix::rowSums(matrix(qq0,nrow=nrow(dtm)))>0),nrow=nrow(dtm))
