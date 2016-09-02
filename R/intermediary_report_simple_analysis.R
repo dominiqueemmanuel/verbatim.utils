@@ -73,11 +73,11 @@ intermediary_report_simple_analysis_affiche <- function(dtm,dtm_ref=NULL,title,o
 tab2<-tab3<-NULL
 
   a<-colMeans(dtm)
-  id1<-order(a,decreasing = TRUE)[seq_along(a)<=30]
+
   b<-a
   if(!is.null(dtm_ref)){
     b<-colMeans(dtm_ref)
-    id2<-order(a/ifelse(b==0,1,b),a,decreasing = TRUE)[seq_along(a)<=30]
+
 
     b1<-data.frame(`Mot` = colnames(dtm)
                    ,`Fréquence`=a#paste0(round(a*100,2),"%")
@@ -90,6 +90,9 @@ tab2<-tab3<-NULL
                    # ,`Indice\n (base 100)`=round(100*a/b,0)
                    ,stringsAsFactors = FALSE,check.names=FALSE)
     b<-inner_join(b1,b2,by="Mot")
+    id1<-order(b$`Fréquence`,decreasing = TRUE)%>%head(30)
+    id2<-order(b$`Fréquence`/ifelse(b$`Fréquence\n globale`==0,1,b$`Fréquence\n globale`),b$`Fréquence`,decreasing = TRUE)%>%head(30)
+
     tab0<-b
     attr(tab0,"N")<-NROW(dtm)
     b<-b%>%mutate(`Indice\n (base 100)`=round(100*`Fréquence`/`Fréquence\n globale`,0))%>%
@@ -111,6 +114,8 @@ if(!only_result){
                   ,stringsAsFactors = FALSE,check.names=FALSE)
     tab0<-data.frame(`Mot` = colnames(dtm),`Fréquence`=a,stringsAsFactors = FALSE,check.names=FALSE)
     attr(tab0,"N")<-NROW(dtm)
+    id1<-order(b$`Fréquence`,decreasing = TRUE)%>%head(30)
+
     tab2<-b[id1,]
     if(!only_result){
     g2<-ft(tab2,str_wrap("Top 30 en FREQUENCE de mots les plus représentés",30),c(5,3))

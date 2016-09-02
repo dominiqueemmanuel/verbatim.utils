@@ -6,7 +6,7 @@ final_report_verbatim <- function( file, name,object,global_table,txt0,f,dtm_ori
   stat_freq_topic <- NULL
   stat_freq_global <- NULL
   if(is.null(id_concat))id_concat<-rep(1,nrow(dtm))
-     # save(file="dozz",list=ls())
+      # save(file="dozz",list=ls())
    # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/dozz")
   if(!is.null(object)){
     object$dtm<-1*(object$dtm>0)
