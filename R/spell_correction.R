@@ -18,14 +18,23 @@
 spell_correction <- function(txt, lang="en"
                              , minimal_occurence = 3
                              , excluded_word = NULL
-                             , ingore_cap_word = TRUE) {
+                             , ingore_cap_word = TRUE
+                             , use_memoise = TRUE) {
   lang <- match.arg(tolower(lang), c("en", "fr"))
-  dict <- paste0(lang,"_",if(lang=="en") "US" else toupper(lang))
+  Sys.setenv(DICPATH=paste0(system.file(package = "verbatim.utils"),"/data"))
+  # dict <- paste0(lang,"_",if(lang=="en") "US" else toupper(lang))
   library(magrittr)
   library(stringr)
   library(stringi)
   library(hunspell)
   library(fastmatch)
+  if(lang == "fr"){
+    dict<-dictionary("French")
+
+  } else {
+dict<-dictionary("en_US")
+  }
+
   # https://github.com/dominiqueemmanuel/hunspell
 
   ## Pour les autres signes de ponctuation on rajoute un espace avant et après
@@ -68,8 +77,14 @@ spell_correction <- function(txt, lang="en"
   y<-hunspell_check(n,dict=dict)
   q<-!grepl("[^\\'\\-[:^punct:]]"%>%force_encoding,n,perl=TRUE)
 
+  if(use_memoise){
+    hunspell_suggest2<-memoise::memoise(function(x, dict =  dict) hunspell_suggest(x, dict = dict))
+  } else {
+    hunspell_suggest2 <- hunspell_suggest
+  }
+
   # R2fléchir à une version parralélisée (mcapply)
-  e<-hunspell_suggest(n[!y & q],dict = dict)%>%sapply(function(t)t[1])
+  e<-hunspell_suggest2(n[!y & q],dict = dict)%>%sapply(function(t)t[1])
   n2<-n
   n2[!y & q][!is.na(e)]<-e[!is.na(e)]
   levels(x)<-plyr::mapvalues(l,n,n2,warn_missing = FALSE)%>%force_encoding
@@ -79,6 +94,7 @@ spell_correction <- function(txt, lang="en"
   return(txt)
 
 }
-
-
-# spell_correction(c("une Phrase avec une fauute et une autre Fauute","Une phrase avec un mot inconnu xxsf"), lang="fr")
+#
+# system.time({
+   spell_correction(c("une Phrase avec une fautte et une autre Fauute","Une phrase avec un mot inconnu xxsf"), lang="fr",use_memoise = FALSE)
+# })

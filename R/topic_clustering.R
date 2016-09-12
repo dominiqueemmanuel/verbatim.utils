@@ -91,13 +91,13 @@ if(nrow(vocab$vocab)==0){
   q<-q%>%group_by(id)%>%summarise(txt=paste(terms,collapse=" "),n=length(terms))
   skip_grams_window <- max(3,min(6,quantile(q$n,0.5)))
 if(is.na(skip_grams_window))skip_grams_window<-2
-  vocab_v <- vocab_vectorizer(vocab, grow_dtm = FALSE, skip_grams_window = skip_grams_window)
+  vocab_v <- vocab_vectorizer(vocab, grow_dtm = TRUE, skip_grams_window = skip_grams_window)
 
 
   it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
   tcm <- tryCatch(create_tcm(it, vocab_v),error=function(e)Matrix(0,nrow=length(vocab$vocab$terms),ncol=length(vocab$vocab$terms)))
 
-  it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
+  # it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
   dtm <- create_dtm(it, vocab_v)
   colnames(dtm) <- force_encoding(colnames(dtm))
 
@@ -114,10 +114,13 @@ if(is.na(skip_grams_window))skip_grams_window<-2
   #
 
   set.seed(123)
-  glove_model <- GloVe(vocabulary = vocab,shuffle_seed = 1, word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size),
-                       x_max = 10)
+  glove <- GlobalVectors$new( word_vectors_size = min(ceiling(nrow(tcm)/2),word_vectors_size), vocabulary = vocab, x_max = 10)
   # fitted_model = fit(glove_model, tcm, n_iter = 150, convergence_tol = 0.05, verbose = TRUE)
-  word_vectors <- tryCatch(glove_model$fit_predict(tcm, n_iter = 150, convergence_tol = 0.005, verbose = TRUE),error=function(e)Matrix(0,nrow=length(vocab$vocab$terms),ncol=min(ceiling(nrow(tcm)/2),word_vectors_size)))
+  word_vectors <- tryCatch({
+    glove$fit(tcm, n_iter = 150, convergence_tol = 0.005)
+    glove$get_word_vectors()
+  }
+    ,error=function(e)Matrix(0,nrow=length(vocab$vocab$terms),ncol=min(ceiling(nrow(tcm)/2),word_vectors_size)))
   # get word vectors
 
   rownames(word_vectors) <- force_encoding(rownames(tcm))
@@ -156,8 +159,11 @@ if(is.na(skip_grams_window))skip_grams_window<-2
 if(is.null(rule_table_origin)){
   set.seed(123)
   id<-which(rowSums(dtm)>0)
-  m0<-LDA(n_topics = nb_topic,vocabulary = vocab)
-  a<-tryCatch({m0$fit_predict(dtm[id,],n_iter = 250)},error=function(e)matrix(0,nrow=length(id),ncol=nb_topic))
+  m0<-LatentDirichletAllocation$new(n_topics = nb_topic,vocabulary = vocab)
+  a<-tryCatch({
+    m0$fit(dtm[id,],n_iter = 250)
+    m0$fit_transform(dtm[id,], n_iter =20, check_convergence_every_n = 5)
+    },error=function(e)matrix(0,nrow=length(id),ncol=nb_topic))
 
   # set.seed(123)
   # m<-skmeans(x=M3[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
