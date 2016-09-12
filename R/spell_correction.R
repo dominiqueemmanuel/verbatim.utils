@@ -96,5 +96,5 @@ dict<-dictionary("en_US")
 }
 #
 # system.time({
-   spell_correction(c("une Phrase avec une fautte et une autre Fauute","Une phrase avec un mot inconnu xxsf"), lang="fr",use_memoise = FALSE)
+   # spell_correction(c("une Phrase avec une fautte et une autre Fauute","Une phrase avec un mot inconnu xxsf"), lang="fr",use_memoise = FALSE)
 # })
