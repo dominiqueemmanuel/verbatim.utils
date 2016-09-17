@@ -3,7 +3,7 @@ Title: Useful functions for verbatims cleaning, visualization and topic modeling
 Version: 0.0.0.9032
 Authors@R: person("Dominique", "Emmanuel", email = "dominique_emmanuel@hotmail.com", role = c("aut", "cre"))
 Description: Useful functions for verbatims cleaning, visualization and topic modeling.
-Depends: compiler, hunspell, fastmatch, textreuse, igraph, data.table, Matrix, magrittr, grid, gridExtra, gtable, gridBase, smacof, ggthemes, ggplot2, ggrepel, skmeans, stringdist
+Depends: qlcMatrix,compiler, hunspell, fastmatch, textreuse, igraph, data.table, Matrix, magrittr, grid, gridExtra, gtable, gridBase, smacof, ggthemes, ggplot2, ggrepel, skmeans, stringdist
 Imports: slam, data.table, ReporteRs, seriation, textcat, plyr, glmnet, RSpectra, stringi, stringdist, dplyr, Matrix, arules, Ruchardet, magrittr, stringr, tokenizers, qdapRegex, text2vec, xlsx, xlsxjars ,XLConnect, XLConnectJars
 License: AGPL-3
 LazyData: true
