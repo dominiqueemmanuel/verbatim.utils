@@ -165,8 +165,9 @@ if(is.null(rule_table_origin)){
     # m0$fit(dtm[id,],n_iter = 100)
     m0$fit_transform(dtm[id,], n_iter =150, check_convergence_every_n = 5)
     },error=function(e)matrix(0,nrow=length(id),ncol=nb_topic))
-  am0<-m0$get_word_vectors()
-
+  am0<-tryCatch({
+    m0$get_word_vectors()
+  },error=function(e)matrix(0,nrow=NCOL(dtm),ncol=nb_topic))
   # set.seed(123)
   # m<-skmeans(x=M3[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
   # topic_matrix<-as(m$membership>threshold,"Matrix")
