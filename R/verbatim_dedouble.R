@@ -1,6 +1,16 @@
 # library(dplyr)
 # library(readxl)
 # library(verbatim.utils)
+#
+# f1<-data.table::fread("e:/Travail - Freelance/TNS/brexit/data/gb2/brexit_netbase_uk only_before results_2016-09-01_tab delimited.csv",sep="\t")
+# f2<-data.table::fread("e:/Travail - Freelance/TNS/brexit/data/gb2/brexit_netbase_uk only_after results_2016-09-01_KF_tab delimited.csv",sep="\t")
+# nrow(f1)
+# nrow(f2)
+# f<-rbindlist(list(f1,f2))
+# system.time({
+# txt<-force_encoding(f$`Sound Bite Text`,tolower=TRUE)
+# })
+# 122.93        0.19      123.93
 # f1<-read_excel("e:/Travail - Freelance/TNS/brexit/StreamFrenchQueryBrexit1.xlsx")
 # dim(f1)
 # f2<-read_excel("e:/Travail - Freelance/TNS/brexit/StreamFrenchQuery2.xlsx")
@@ -22,8 +32,8 @@
 #'
 #'
 #'
-verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, bands = 5L , threshold = 1-cos(pi/3) ,progress=FALSE, use_duplicated = TRUE){
-   # exact=FALSE;mc.cores = 4L; n_minhashes= 30L; bands = 5L ; threshold = 1-cos(pi/3) ;progress=TRUE; use_duplicated = TRUE
+verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 50L, bands = 5L , threshold = 1-cos(pi/3) ,progress=FALSE, use_duplicated = TRUE){
+    # exact=FALSE;mc.cores = 4L; n_minhashes= 30L; bands = 5L ; threshold = 1-cos(pi/3) ;progress=TRUE; use_duplicated = TRUE
     library(textreuse)
   library(dplyr)
   library(stringr)
@@ -49,11 +59,13 @@ verbatim_dedouble<-function(txt,exact=FALSE,mc.cores = 4L, n_minhashes= 30L, ban
 
 
   minhash <- minhash_generator(n = n_minhashes, seed = 3552)
-  e20<-suppressWarnings(TextReuseCorpus(text=txt, tokenizer = tokenize_ngrams, n = 4,
+  e20<-suppressWarnings(TextReuseCorpus(text=txt,  tokenizer = tokenizers::tokenize_ngrams, n = 3,lowercase = FALSE,simplify=TRUE,
                                         minhash_func = minhash, keep_tokens = TRUE,
                                         progress = progress))
-  a0<-skipped(e20)%>%expand.grid(a=.,b=.)%>%subset(a!=b)
-
+  a0<-data.table:::merge.data.table(data.table(a=skipped(e20),un=1),data.table(b=skipped(e20),un=1),by="un",allow.cartesian=TRUE)
+  a0<-subset(a0,a!=b)
+  a0[,un:=NULL]
+  a0<-as.data.frame(a0)
   e2<-tryCatch({
     buckets <- lsh(e20, bands = bands, progress = progress)
     candidates <- lsh_candidates(buckets)

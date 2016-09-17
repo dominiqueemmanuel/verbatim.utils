@@ -32,11 +32,14 @@ word_exclusion0 <- function(txt
                            ,excluded_form= c("email","link",'@user',"hashtag","date","heure","pourcentage","monnaie","number","emoticon","special_caracter","ponctuation")
                            ,replace_excluded_form = TRUE
                            ,excluded_word= NULL
-                           ,min_letter = 0)
+                           ,min_letter = 0
+                           , force_encode = FALSE)
 {
   excluded_form <- sapply(tolower(excluded_form),function(x)match.arg(x,c("email","link","@user","hashtag","date","heure","pourcentage","monnaie","number","emoticon","special_caracter","ponctuation")))
   nom <- names(txt)
+  if(force_encode){
   txt <- force_encoding(txt)
+  }
   library(magrittr)
   library(stringr)
   library(qdapRegex)

@@ -10,7 +10,8 @@ intermediary_report <- function(file,object,global_table,txt0,f){
   library(stringr)
   X <-  object$dtm %*% object$word_vectors #2349 40
   Y<- t(object$txtd[,-1]) %*% X
-  D<-(proxy::dist(Y%>%as.matrix,X%>%as.matrix,methode="cosine"))[,]%>%as.matrix
+  # D<-(proxy::dist(Y%>%as.matrix,X%>%as.matrix,method="cosine"))[,]%>%as.matrix
+  D<-1-(qlcMatrix::cosSparse(t(Y),t(X))%>%as.matrix)
   dim(object$txtd)
 pdf(file,width=20,height=ceiling(20/(2)))
 for(kk in seq_along(global_table[,1])){print(kk)

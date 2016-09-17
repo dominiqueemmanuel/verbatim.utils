@@ -20,7 +20,7 @@ topic_clustering <- function(txt=NULL,lang="en",nb_topic = 20,sep_phrase="_ponct
   library(dplyr)
   library(stringi)
   library(stringr)
-     # save(file="do2",list=ls())
+      # save(file="do2",list=ls())
    # save(file="do2",list=ls())
   # stop("xx")
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do2")
@@ -161,9 +161,11 @@ if(is.null(rule_table_origin)){
   id<-which(rowSums(dtm)>0)
   m0<-LatentDirichletAllocation$new(n_topics = nb_topic,vocabulary = vocab)
   a<-tryCatch({
-    m0$fit(dtm[id,],n_iter = 250)
-    m0$fit_transform(dtm[id,], n_iter =20, check_convergence_every_n = 5)
+    m0$verbose<-TRUE
+    # m0$fit(dtm[id,],n_iter = 100)
+    m0$fit_transform(dtm[id,], n_iter =150, check_convergence_every_n = 5)
     },error=function(e)matrix(0,nrow=length(id),ncol=nb_topic))
+  am0<-m0$get_word_vectors()
 
   # set.seed(123)
   # m<-skmeans(x=M3[id,],k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
@@ -172,19 +174,26 @@ if(is.null(rule_table_origin)){
   s<-ifelse(is.na(s),0,s)
   threshold<-apply(a,1,function(t)if(all(t<=s)) Inf else median(t[t>s]))
   topic_matrix<-as(a>=threshold,"Matrix")
-  table(rowSums(topic_matrix))
+  # table(rowSums(topic_matrix))
+  # colSums(topic_matrix)
 
+  s<-apply(am0,2,function(t)quantile(t[t>0],0.5))
+  s<-ifelse(is.na(s),0,s)
+  threshold<-apply(am0,1,function(t)if(all(t<=s)) Inf else median(t[t>s]))
+  word_matrix<-as(am0>=threshold,"Matrix")
+  # table(rowSums(topic_matrix))
+  # colSums(word_matrix)
   #  set.seed(123)
   #  m<-skmeans(x=b,k = min(nb_topic,max(floor(nrow(word_vectors)/2),2)),method="pclust",m=m,control=list(verbose=TRUE,start = "S",maxiter=75))
   #  topic_matrix<-as(m$membership>threshold,"Matrix")
 
   # topic_matrix<-as(m$membership>threshold,"Matrix")
   colnames(topic_matrix) <- paste0("cluster___",seq(ncol(topic_matrix)))
-
+  colnames(word_matrix) <- paste0("cluster___",seq(ncol(word_matrix)))
   # id<-seq(nrow(dtm))
   rule <- transform_topic_to_rule(dtm = dtm[id,,dtop=FALSE],topic_matrix = topic_matrix,word_vectors = word_vectors
                                   # ,plot = TRUE,verbose = TRUE
-,mc.cores = mc.cores)
+,mc.cores = mc.cores,word_matrix = word_matrix )
 
 
   word_distance_function <- tryCatch(word_distance(word_vectors),error=function(x)x)
@@ -327,8 +336,9 @@ topic_clustering_divide <- function(object,id_topic,n=2,mc.cores = 4){
 }
 
 
-transform_topic_to_rule <- function(dtm,topic_matrix,ignore_rule_table=NULL,word_vectors=NULL,seuils=c(80,20,10,10),plot=FALSE,verbose=FALSE,max_rule_member=4, mc.cores = 4){
-  # save(file="do4",list=ls())
+transform_topic_to_rule <- function(dtm,topic_matrix,ignore_rule_table=NULL,word_vectors=NULL,seuils=c(80,20,10,10),plot=FALSE,verbose=FALSE,max_rule_member=4, mc.cores = 4,word_matrix = NULL){
+   # save(file="do4",list=ls())
+  # stop("xx")
   # load("C:/Users/Dominique/Desktop/Stat_Regie/data/application_data/do4")
   # save(file="doz",list=ls())
   # stop('xxx')
@@ -361,6 +371,7 @@ transform_topic_to_rule <- function(dtm,topic_matrix,ignore_rule_table=NULL,word
     e<-e[seq_along(e)<=300]
     e<-colnames(dtm)[e]
     e<-unique(e)
+    e<-intersect(e,force_encoding(names(which(word_matrix[,tt]==1))))
     B<-as(cbind(topic_matrix,dtm[,e,drop=FALSE]>0),"nMatrix")
     colnames(B)<-force_encoding(colnames(B))
     base<-new("itemMatrix",

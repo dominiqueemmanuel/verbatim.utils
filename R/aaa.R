@@ -4,7 +4,7 @@ addPlot2 <- function(doc,...){
   return(doc)
 }
 
-
+#' @export make_parallel_func
 
 make_parallel_func <- function(fun){
   # eval(quote({
