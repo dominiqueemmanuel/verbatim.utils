@@ -135,7 +135,7 @@ library(stringi)
   if(res!=0){
     print("ERREUR LEMMATISATION")
     txt<-str_split(txt,"MOT_SEPARATEUR_DE_VERBATIM")[[1]]%>%str_trim
-    return(list(txt_lemme=txt,txt_categ=NULL))
+    return(list(txt_lemme=txt,txt_categ=NULL,txt_in=txt))
   }
 
   ## On lit le fichier en sortie
@@ -170,7 +170,7 @@ library(stringi)
   out_categ <- str_trim(str_split(paste(out_categ,collapse = " "), tolower("MOT_SEPARATEUR_DE_VERBATIM"))[[1]])
   # out_categ <- out_categ[-length(out_categ)]
 
-  return(list(txt_lemme=out_lemme,txt_categ=out_categ,out_in=out_in))
+  return(list(txt_lemme=out_lemme,txt_categ=out_categ,txt_in=out_in))
 
 }
 
@@ -210,6 +210,9 @@ lemmatisation  <- function(txt, lang="en", mc.cores = 4, path = NULL, remove = N
   for(e in 1:length(txt)){
     result$txt_lemme <- c(result$txt_lemme, txt[[e]]$txt_lemme)
     result$txt_categ <- c(result$txt_categ, txt[[e]]$txt_categ)
+    result$txt_in <- c(result$txt_in, txt[[e]]$txt_in)
+
+
   }
 
   return(result)
