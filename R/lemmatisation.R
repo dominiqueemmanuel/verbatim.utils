@@ -170,7 +170,7 @@ library(stringi)
   out_categ <- str_trim(str_split(paste(out_categ,collapse = " "), tolower("MOT_SEPARATEUR_DE_VERBATIM"))[[1]])
   # out_categ <- out_categ[-length(out_categ)]
 
-  return(list(txt_lemme=out_lemme,txt_categ=out_categ))
+  return(list(txt_lemme=out_lemme,txt_categ=out_categ,out_in=out_in))
 
 }
 
