@@ -372,7 +372,9 @@ transform_topic_to_rule <- function(dtm,topic_matrix,ignore_rule_table=NULL,word
     e<-e[seq_along(e)<=300]
     e<-colnames(dtm)[e]
     e<-unique(e)
+    if(!is.null(word_matrix)){
     e<-intersect(e,force_encoding(names(which(word_matrix[,tt]==1))))
+      }
     B<-as(cbind(topic_matrix,dtm[,e,drop=FALSE]>0),"nMatrix")
     colnames(B)<-force_encoding(colnames(B))
     base<-new("itemMatrix",
