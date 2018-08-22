@@ -91,14 +91,14 @@ if(nrow(vocab$vocab)==0){
   q<-q%>%group_by(id)%>%summarise(txt=paste(terms,collapse=" "),n=length(terms))
   skip_grams_window <- max(3,min(6,quantile(q$n,0.5)))
 if(is.na(skip_grams_window))skip_grams_window<-2
-  vocab_v <- vocab_vectorizer(vocab, grow_dtm = TRUE, skip_grams_window = skip_grams_window)
+  vocab_v <- vocab_vectorizer(vocab)
 
 
   it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
   tcm <- tryCatch(create_tcm(it, vocab_v),error=function(e)Matrix(0,nrow=length(vocab$vocab$terms),ncol=length(vocab$vocab$terms)))
 
   # it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
-  dtm <- create_dtm(it, vocab_v)
+  dtm <- create_dtm(it, vocab_v, skip_grams_window = skip_grams_window)
   colnames(dtm) <- force_encoding(colnames(dtm))
 
 
