@@ -95,10 +95,10 @@ if(is.na(skip_grams_window))skip_grams_window<-2
 
 
   it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
-  tcm <- tryCatch(create_tcm(it, vocab_v),error=function(e)Matrix(0,nrow=length(vocab$vocab$terms),ncol=length(vocab$vocab$terms)))
+  tcm <- tryCatch(create_tcm(it, vocab_v, skip_grams_window = skip_grams_window ),error=function(e)Matrix(0,nrow=length(vocab$vocab$terms),ncol=length(vocab$vocab$terms)))
 
   # it <- itoken(txtd$txt, preprocess_function = identity,tokenizer = stem_tokenizer)
-  dtm <- create_dtm(it, vocab_v, skip_grams_window = skip_grams_window)
+  dtm <- create_dtm(it, vocab_v)
   colnames(dtm) <- force_encoding(colnames(dtm))
 
 
