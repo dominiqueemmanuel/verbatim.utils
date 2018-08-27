@@ -9,15 +9,35 @@ force_encoding <- make_parallel_func(force_encoding0)
 
 
 
-force_encoding0 <- function(txt,target_encoding = "UTF-8",tolower=FALSE,trace=FALSE)
+force_encoding0 <-  function(txt,target_encoding = "UTF-8",tolower=FALSE,trace=FALSE, vect = TRUE)
 {
   if(length(txt)==0)return(txt)
-  if(!tolower){
-    txt <- vapply(txt,function(x){tryCatch({x<-iconv(x,Ruchardet::detectEncoding(x),target_encoding);x},error=function(e){if(trace){print(e);print(x)};x}) }, FUN.VALUE = character(1),USE.NAMES = FALSE)
+  if(!vect){
+    if(!tolower){
+      txt <- vapply(txt,function(x){tryCatch({x<-iconv(x,Ruchardet::detectEncoding(x),target_encoding);x},error=function(e){if(trace){print(e);print(x)};x}) }, FUN.VALUE = character(1),USE.NAMES = FALSE)
+    } else {
+      txt <- vapply(txt,function(x){tryCatch({x<-tolower(iconv(x,Ruchardet::detectEncoding(x),target_encoding));x},error=function(e){if(trace){print(e);print(x)};x})}, FUN.VALUE = character(1),USE.NAMES = FALSE)
+    }
+    Encoding(txt) <- target_encoding
   } else {
-    txt <- vapply(txt,function(x){tryCatch({x<-tolower(iconv(x,Ruchardet::detectEncoding(x),target_encoding));x},error=function(e){if(trace){print(e);print(x)};x})}, FUN.VALUE = character(1),USE.NAMES = FALSE)
+    
+    ee<-sort(table(Ruchardet::detectEncoding(txt)),decreasing=TRUE)
+    if(length(ee)==1 & names(ee)[1]==""){
+      ee<-""
+    } else {
+      ee<- names(ee)[names(ee)!=""]%>%head(1)
+    }
+    if(!tolower){
+      txt<-tryCatch({iconv(txt,ee,target_encoding)},error=function(e){txt })
+    } else {
+      txt<-tryCatch({tolower(iconv(txt,ee,target_encoding))},error=function(e){txt })
+    }
+    txt<-sapply(txt,function(t){
+      Encoding(t) <- target_encoding
+      t
+    })
   }
-  Encoding(txt) <- target_encoding
+  
   return(txt)
 }
 
