@@ -180,7 +180,7 @@ library(stringi)
 
 #' @export lemmatisation
 lemmatisation  <- function(txt, lang="en", mc.cores = 4, path = NULL, remove = NULL
-                          ,opt_freeling = "--noloc --nonumb --nodate --flush --ner --force retok --afx") {
+                          ,opt_freeling = "--nonumb --nodate --flush --ner --force retok --afx") {
   lang <- match.arg(tolower(lang), c("en", "fr","ge","sp","it","pt","ru"))
 
   if(.Platform[[1]]=="windows" & is.null(path)) {
