@@ -100,7 +100,7 @@ transform_pos <- function(x , lang = "en"){
 
 
 }
-sub_lemmatisation <- function(txt, lang="en", path = NULL,remove = NULL){
+sub_lemmatisation <- function(txt, lang="en", path = NULL,remove = NULL, opt_freeling=NULL){
   # cat(".")
 library(stringi)
   ## Nom de fichier source
@@ -117,9 +117,9 @@ library(stringi)
 
   ## Écriture de la commande
   if(is.null(path)){
-    command <-   paste0("analyze  --noloc --nonumb --nodate --flush --ner --force retok --afx  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
+    command <-   paste0("analyze  ",opt_freeling,"  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
   } else {
-    command <-   paste0(path ,  "  --noloc --nonumb --nodate --flush --ner --force retok  --afx  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
+    command <-   paste0(path ," ",opt_freeling,  "  --noloc --nonumb --nodate --flush --ner --force retok  --afx  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
   }
   ## Exécution de la commande
   if(.Platform[[1]]=="windows") {
@@ -179,7 +179,8 @@ library(stringi)
 
 
 #' @export lemmatisation
-lemmatisation  <- function(txt, lang="en", mc.cores = 4, path = NULL, remove = NULL) {
+lemmatisation  <- function(txt, lang="en", mc.cores = 4, path = NULL, remove = NULL
+                          ,opt_freeling = "--noloc --nonumb --nodate --flush --ner --force retok --afx") {
   lang <- match.arg(tolower(lang), c("en", "fr","ge","sp","it","pt","ru"))
 
   if(.Platform[[1]]=="windows" & is.null(path)) {
@@ -206,7 +207,7 @@ lemmatisation  <- function(txt, lang="en", mc.cores = 4, path = NULL, remove = N
   txt <- lapply(chunk2(txt, mc.cores), function(lis_sent) paste(lis_sent,collapse  = "\nMOT_SEPARATEUR_DE_VERBATIM\n"))
 
 
-  txt <- mclapply(txt, function(x) sub_lemmatisation(x,lang=lang,path=path,remove=remove), mc.cores = mc.cores)
+  txt <- mclapply(txt, function(x) sub_lemmatisation(x,lang=lang,path=path,remove=remove,opt_freeling=opt_freeling), mc.cores = mc.cores)
 
   # Reducing
   result = list()
