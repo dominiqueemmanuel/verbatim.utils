@@ -117,9 +117,9 @@ library(stringi)
 
   ## Écriture de la commande
   if(is.null(path)){
-    command <-   paste0("analyze  --nonumb --nodate --flush --ner --force retok --afx  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
+    command <-   paste0("analyze  --noloc --nonumb --nodate --flush --ner --force retok --afx  --output freeling --input text --inplv text -f ",lang,".cfg <",testtxt_in_name," >",testtxt_out_name)
   } else {
-    command <-   paste0(path ,  "  --nonumb --nodate --flush --ner --force retok  --afx  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
+    command <-   paste0(path ,  "  --noloc --nonumb --nodate --flush --ner --force retok  --afx  --output freeling --input text --inplv text -f ",paste0(dirname(dirname(path)),"/data/config/"),lang,".cfg <",testtxt_in_name," >",testtxt_out_name,"  --tlevel 0")
   }
   ## Exécution de la commande
   if(.Platform[[1]]=="windows") {
